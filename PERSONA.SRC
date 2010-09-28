@@ -1,0 +1,94 @@
+type
+  TListBoxRec = record    {<-- omit if TListBoxRec is defined elsewhere}
+    PS : PStringCollection;
+    Selection : Integer;
+    end;
+
+var
+  DataRec : record
+    Field1 : TListBoxRec;
+    Field2 : TListBoxRec;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(1, 0, 78, 23);
+New(Dlg, Init(R, 'Персональные цены для клиента 12345678901234567890 1234'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(38, 2, 39, 18);
+Control := New(PScrollBar, Init(R));
+Dlg^.Insert(Control);
+
+R.Assign(1, 2, 38, 18);
+Control := New(PListBox, Init(R, 1, PScrollbar(Control)));
+Dlg^.Insert(Control);
+
+  R.Assign(1, 1, 38, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Наименование товара         Код  Фас', Control)));
+
+R.Assign(76, 2, 77, 18);
+Control := New(PScrollBar, Init(R));
+Dlg^.Insert(Control);
+
+R.Assign(39, 2, 76, 18);
+Control := New(PListBox, Init(R, 1, PScrollbar(Control)));
+Dlg^.Insert(Control);
+
+  R.Assign(39, 1, 76, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Выбранные наименования      Код  Фас', Control)));
+
+R.Assign(1, 20, 65, 21);
+Control := New(PColoredText, Init(R, '1234567890123456789012345678901234567'+
+     '890123456789012345678901234', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(1, 21, 65, 22);
+Control := New(PColoredText, Init(R, '1234567890123456789012345678901234567'+
+     '890123456789012345678901234', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(1, 19, 13, 20);
+Control := New(PColoredText, Init(R, 'Комментарий:', $74));
+Dlg^.Insert(Control);
+
+R.Assign(39, 18, 48, 19);
+Control := New(PColoredText, Init(R, 'Оператор:', $74));
+Dlg^.Insert(Control);
+
+R.Assign(48, 18, 60, 19);
+Control := New(PColoredText, Init(R, '123456789012', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(61, 18, 69, 19);
+Control := New(PColoredText, Init(R, 'Наценка:', $74));
+Dlg^.Insert(Control);
+
+R.Assign(69, 18, 75, 19);
+Control := New(PColoredText, Init(R, '123456', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(43, 19, 48, 20);
+Control := New(PColoredText, Init(R, 'Дата:', $74));
+Dlg^.Insert(Control);
+
+R.Assign(48, 19, 56, 20);
+Control := New(PColoredText, Init(R, '12345678', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(57, 19, 63, 20);
+Control := New(PColoredText, Init(R, 'Время:', $74));
+Dlg^.Insert(Control);
+
+R.Assign(63, 19, 71, 20);
+Control := New(PColoredText, Init(R, '12345678', $7E));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

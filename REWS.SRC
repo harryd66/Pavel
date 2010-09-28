@@ -1,0 +1,25 @@
+var
+  DataRec : record
+    Field3 : Word;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(11, 6, 69, 16);
+New(Dlg, Init(R, 'Укажите вид ревизии'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(1, 1, 57, 9);
+Control := New(PCheckboxes, Init(R, 
+  NewSItem('Label1',
+  NewSItem('Label2', Nil))));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

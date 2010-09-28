@@ -1,0 +1,6 @@
+
+PKZIP (R)  FAST!  Create/Update Utility    Version 4.1v    2-04-94    
+Copr. 1989-1994 PKWARE Inc.  All Rights Reserved.  PKZIP/h for help
+PKZIP Reg. U.S. Pat. and Tm. Off.                       
+
+PKZIP: (E01) can't create: D:/WORKS/WINDOWS/RES.001

@@ -1,0 +1,17 @@
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(0, 0, 80, 23);
+New(Dlg, Init(R, 'Dialog Design'));
+
+R.Assign(40, 18, 79, 19);
+Control := New(PColoredText, Init(R, 'ld;fkgl;kfdgsjfdkljg sjgfskl; ', $DE));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

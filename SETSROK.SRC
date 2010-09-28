@@ -1,0 +1,24 @@
+var
+  DataRec : record
+    Field1 : String[3];
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(33, 10, 47, 13);
+New(Dlg, Init(R, ''));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(4, 1, 9, 2);
+Control := New(PInputLine, Init(R, 3));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['1','2','3','4','5','6','7','8','9','0']));
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

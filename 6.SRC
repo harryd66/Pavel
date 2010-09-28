@@ -1,0 +1,27 @@
+var
+  DataRec : record
+    Field1 : Word;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(27, 8, 52, 14);
+New(Dlg, Init(R, 'Ошибки'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(1, 1, 24, 5);
+Control := New(PRadioButtons, Init(R, 
+  NewSItem('Прихода',
+  NewSItem('Ревизии',
+  NewSItem('Прочие ошибки',
+  NewSItem('Все', Nil))))));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

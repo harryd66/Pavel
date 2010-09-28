@@ -1,0 +1,242 @@
+var
+  DataRec : record
+    Field2 : String[6];
+    Field9 : String[10];
+    Field10 : String[10];
+    Field11 : String[10];
+    Field12 : String[10];
+    Field13 : String[10];
+    Field14 : String[10];
+    Field15 : String[10];
+    Field16 : String[10];
+    Field17 : String[10];
+    Field18 : String[10];
+    Field19 : String[10];
+    Field20 : String[10];
+    Field21 : String[10];
+    Field22 : String[10];
+    Field23 : String[10];
+    Field24 : String[10];
+    Field25 : String[10];
+    Field26 : String[10];
+    Field27 : String[10];
+    Field28 : String[10];
+    Field29 : String[10];
+    Field30 : String[10];
+    Field31 : String[10];
+    Field32 : String[10];
+    Field33 : String[10];
+    Field34 : String[10];
+    Field35 : String[10];
+    Field36 : String[10];
+    Field37 : String[10];
+    Field38 : String[10];
+    Field39 : String[10];
+    Field40 : String[10];
+    Field41 : String[10];
+    Field42 : String[10];
+    Field43 : String[10];
+    Field44 : String[10];
+    Field45 : String[10];
+    Field46 : String[10];
+    Field47 : String[10];
+    Field48 : String[10];
+    Field49 : String[10];
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(4, 7, 76, 16);
+New(Dlg, Init(R, 'Настройка платного кредита'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(1, 2, 9, 8);
+Control := New(PColoredText, Init(R, 'Шкала 1'^M+
+     'Шкала 2'^M+
+     'Шкала 3'^M+
+     'Шкала 4'^M+
+     'Шкала 5'^M+
+     'Шкала 6', $74));
+Dlg^.Insert(Control);
+
+R.Assign(9, 1, 71, 2);
+Control := New(PColoredText, Init(R, '1 день    2 дня    3 дня    4 дня    '+
+     '5 дней   6 дней   7 дней', $74));
+Dlg^.Insert(Control);
+
+R.Assign(9, 2, 17, 3);
+Control := New(PInputLine, Init(R, 6));
+Dlg^.Insert(Control);
+
+R.Assign(18, 2, 26, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(27, 2, 35, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(36, 2, 44, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(45, 2, 53, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(54, 2, 62, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(63, 2, 71, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(9, 3, 17, 4);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(18, 3, 26, 4);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(27, 3, 35, 4);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(36, 3, 44, 4);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(45, 3, 53, 4);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(54, 3, 62, 4);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(63, 3, 71, 4);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(9, 4, 17, 5);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(18, 4, 26, 5);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(27, 4, 35, 5);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(36, 4, 44, 5);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(45, 4, 53, 5);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(54, 4, 62, 5);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(63, 4, 71, 5);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(9, 5, 17, 6);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(18, 5, 26, 6);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(27, 5, 35, 6);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(36, 5, 44, 6);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(45, 5, 53, 6);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(54, 5, 62, 6);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(63, 5, 71, 6);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(9, 6, 17, 7);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(18, 6, 26, 7);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(27, 6, 35, 7);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(36, 6, 44, 7);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(45, 6, 53, 7);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(54, 6, 62, 7);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(63, 6, 71, 7);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(9, 7, 17, 8);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(18, 7, 26, 8);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(27, 7, 35, 8);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(36, 7, 44, 8);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(45, 7, 53, 8);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(54, 7, 62, 8);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(63, 7, 71, 8);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

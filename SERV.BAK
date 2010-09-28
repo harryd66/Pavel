@@ -1,0 +1,5797 @@
+{$I Compile.INC}
+
+{$IfNDEF DPMI}
+
+{$F+}
+{$O+}
+
+{$EndIf}
+Unit Serv;
+
+Interface
+
+Uses Dialogs,Glob,ColorTxt,ServStr,Views,Utils;
+
+Const Max2=2;
+      Max6=6;
+      Max9=9;
+      Max10=10;
+
+     SklTMP='c:\TMPS';
+     SklTMP1='TMP';
+     SklTMP2='Analys';
+
+
+Procedure ReadNewINI(Var Res : LongInt);
+Procedure WriteNewINI(Var Res :LongInt);
+Function Location(Const P:PBox;Const s:ArtikulStr;b:Boolean):Word;
+procedure Errors(Const St:ALLStr);
+Procedure ArcBaza;
+Function  GetFileLocation3 (Const Sl : TDateString): Longint;
+Function TestDate(Const s:TDateString;Var l:LongInt) : Boolean;
+Function Times:TDateString;
+Function IncData(D:TDateString):TDateString;
+Procedure MemC;
+Procedure MemCc(s: String);
+Function TestElement (Const S : AllStr;Const P : PBox) : Boolean;
+Function TestElementDivision (Const SArt,SOtd : AllStr;Const P : PBox) : Boolean;
+Procedure AInfo(Const S: StrName);
+Procedure DInfo(Const S: StrName);
+Procedure NoInfo;
+Procedure NoInfoMsg;
+Procedure ReadRek(Var Res : LongInt);
+Procedure WriteRek(Var Res : LongInt);
+Function Password(Const pas : Byte) : Boolean;
+Procedure ClearFind;
+Procedure AddProtocol(s,s1,s2:String);
+Procedure NewTmpAndAnalys;
+Procedure NewTmpAndAnalysLocal;
+{Function FullScreen(Const P:PBox;Const s,s1:String;t:Byte):Boolean;}
+Function FullScreen(Const P:PBox;Const s,s1:String;SDoc:ArtikulStr;SDate:TDateString;
+                                         t:Byte):Boolean;
+
+Function TestProdaga (Const SArt,SOtd : AllStr;Const P : PBox) : Boolean;
+Function Code(s:TMyString):TMyString;
+Function DeCode(s:TMyString):TMyString;
+Function Recogniz(S:AllStr):StrName;
+Function RecognizReal(R:Real;Z,M:Byte):StrName;
+Procedure AddProtocolVozwrat(s:String);
+Procedure ChekPost(st:AllStr);
+Function DateDialog(Var s:TDAteString):Boolean;
+Function DatePeriodDialog(Var s1,s2:TDAteString;Regim:Boolean):Boolean;
+{procedure RunModem;}
+{procedure CreatReport(Auto : Boolean);}
+procedure CreatReport(Auto : Boolean;Var s : TMyString);
+function LeadingZero(w : Word) : String;
+Function CalcMesto(E:PSuperMArketType):ArtikulStr;
+Function CalcMestoOtdel(E:PSuperMArketType;Otdel:MaskaNew):ArtikulStr;
+
+Procedure NewIDX;
+Procedure AInfoMsg(Const S : SertifStr);
+Procedure AInfoNetMsg(Const S : SertifStr);
+Procedure DInfoMsg(Const S : SertifStr);
+Procedure DInfoNetMsg(Const S : SertifStr);
+Procedure NoNetInfoMsg;
+
+
+Function Menedger(Var K:TDateString):Word;
+Function Kurs(Var K:TDateString):Word;
+Function SelectVidNalich:Byte;
+Function SelectSort:Byte;
+Function SelectSpecify(Regim :Boolean;Reg:Byte):Byte;
+Function SelectPrz:Byte;
+Function SelectImport(k:Word):Byte;
+Function SelectOtd(Var l : Word):Boolean;
+Function SelectIDTip:Byte;
+
+
+
+{Function NetMessage (Path :TMyString):Byte;}
+Function Test3000(Cod:ArtikulStr;Summa:AllStr):Boolean;
+{Procedure ANetInfo(Const S : StrName);}
+Procedure CreatIDX;
+Procedure ClientIDX;
+Procedure DelFlag;
+Function TestFlag:Boolean;
+function FExists(FileName: String): Boolean;
+{Procedure CreatTodayFile;}
+Procedure CreatSpecialFile(Doc:Word;Date:TDateString);
+Function SelectVidFullInfo(A:Word;M:Maska6):Word;
+
+
+Function SelectVidOstatkiMarket(Var Regim,Srok:Word;Var Start:TDateString):Boolean;
+Function SelectDSertif(Var VidProsmotra,Diapason:Word):Boolean;
+
+Procedure SortNKL (Var L:PSuperMarketType);
+Procedure GlobalNazenka(ClKod:ArtikulStr;Op:Word);
+Procedure GlobalSkidka(ClKod:ArtikulStr;Op:Word);
+
+(*Procedure Unique(Path: String; Var FileName: String);*)
+Procedure NewSkidkiIDX;
+Function  KeySorting(Var Key,D:Word):Boolean;
+Function TestRazdelMemory (Const S : AllStr;Const P : PBox) : Boolean;
+Function LocationR(Const P:PBox;Const s:ArtikulStr;b:Boolean):Word;
+Function SelectRegion(Ext:Boolean):Byte;
+Function KeySorting1(Var Key,D:Word):Boolean;
+Procedure DInfoMsgShkala(Const S : SertifStr;Start,Stop,Cur:LongInt);
+
+Var
+    Inf : PDialog;
+    NetInfMsg,InfMsg : PView;
+{    NetDlg : PView;}
+    DebitDoc,MasDoc : Maska9;
+    PrintSertifDoc,PrintAkzisDoc :Maska3;
+
+    DebitDocNumer,MasDocNumer,PrintSertifDocNumer,PritAkzisDocNumer : Word;
+Implementation
+
+Uses Validate,Memory,Dos,MsgBox,Objects,{Validate,}App,Drivers,TPDate,DbEngine,
+     Protect,NetCall,WinDos,NetDbEng;
+
+(*
+Function NetMessage (Path :TMyString):Byte;
+Var R : TRect;
+    c : Byte;
+    Event : TEvent;
+    s : TMyString;
+    F :File;
+Begin
+s:='Ждите доступа к файлу '+Path;
+Assign(f,Path);
+c:=IOResult;
+Reset(f);
+c:=IoResult;
+If C=51 Then
+If Application^.Current<>PView(NetDlg) Then
+ Begin
+  R.Assign(76-Ord(S[0]), 20, 78, 22);
+  NetDlg := New(PButton, Init(R, S, cmNone, bfNormal));
+  NetDlg^.HelpCtx:=$E000;
+  Desktop^.Insert(NetDlg);
+ End;
+ Application^.GetEvent(Event);
+
+ If C=0 Then
+  Begin
+   c:=0;{прошло подключение успешно}
+   If PView(NetDlg)<> Nil Then Dispose(NetDlg,Done);
+   Close(F);
+  End;
+ If (Event.What=EvKeyDown) And (Event.KeyCode=kbEsc) Then
+  Begin
+   c:=1; {прервано пользователем}
+   If PView(NetDlg)<> Nil Then Dispose(NetDlg,Done);
+   Close(F);
+  End;
+  NetMessage:=C;
+End;
+*)
+
+
+
+
+Procedure DInfoMsgShkala(Const S : SertifStr;Start,Stop,Cur:LongInt);
+var
+  R : TRect;
+  Enable : Boolean;
+  Color : Word;
+  Max : TMyString;
+  Dynamic: TMyString;
+  c : LongInt;
+  Delta : LongInt;
+  Proz : String[6];
+Begin
+Color:={4F}$5F;
+Enable:=True;
+ClearFind;
+
+
+Proz:='100.00';
+Delta:=(Stop-Start);
+
+{MemC(IntToStr(Cur,8)+'-'+IntToStr(Start,8)+'/'+IntToStr(Delta,8));}
+
+If Delta>0.001 Then
+ Begin
+  MyStr((Cur-Start)/Delta*100,6,CMantissa,Proz);
+ End;
+
+{MemC(Proz);}
+
+Dynamic[0]:=#0;
+
+If Delta>0 Then
+Begin
+{заполнение болванки}
+For c:=1 To Ord(s[0])-8 Do Dynamic[c]:=#176
+
+End
+Else
+For c:=1 To Ord(s[0])-8 Do Dynamic[c]:=#219;
+
+Dynamic[0]:=Chr(c);
+
+c:=Round(StrToReal(Proz)/100*c);
+Delta:=c;
+
+If Delta>0 Then
+For c:=1 To Delta Do  Dynamic[c]:=#219;
+
+Application^.GetExtent(R);
+If Not(Glob.ShowMsg) Then
+Begin
+Glob.ShowMsg:=True;
+If (78-Ord(s[0])-2)>=0 Then
+R.Assign(78-Ord(s[0])-2, {19}R.B.Y-6, 78, {22}R.B.Y-3)
+Else
+R.Assign(1, {19}R.B.Y-6, 78, {22}R.B.Y-3);
+InfMsg := New(PColoredText, Init(R,' '+S+^M+' '+Dynamic+' '+Proz+'%',Color));
+InfMsg^.SetState(InfMsg^.State+sfShadow, Enable);
+InfMsg^.HelpCtx := $1001;
+
+StatusLine^.UpDAte;
+Desktop^.Insert(InfMsg);
+InfMsg^.HelpCtx:=$E002;
+End
+Else
+  Begin
+(*
+   Dispose(InfMsg,Done);
+If (78-Ord(s[0])-2)>=0 Then
+R.Assign(78-Ord(s[0])-2, {19}R.B.Y-6, 78, {22}R.B.Y-3)
+Else
+R.Assign(1, {19}R.B.Y-6, 78, {22}R.B.Y-3);
+   InfMsg := New(PColoredText, Init(R,' '+S+^M+' '+Dynamic+' '+Proz+'%',Color));
+   InfMsg^.SetState(InfMsg^.State+sfShadow, Enable);
+   Desktop^.Insert(InfMsg);
+   InfMsg^.HelpCtx := $1001;
+*)
+
+   PStaticText(InfMsg)^.Text^:=' '+S+^M+' '+Dynamic+' '+Proz+'%';
+   Desktop^.Redraw;
+   
+  End;
+End;
+
+
+
+
+Function TestExistCatalog(s:String):Boolean;
+Var f : File;
+    c : Word;
+Begin
+TestExistCatalog:=False;
+Assign(f,s+'\test.txt');
+c:=IoResult;
+rewrite(f);
+c:=IoResult;
+If c<>0 Then Exit;
+Close(f);
+c:=IoResult;
+Erase(f);
+c:=IoResult;
+TestExistCatalog:=(IOResult=0);
+End;
+
+
+
+Procedure ClearFind;
+Begin
+ FindStrok[0]:=#0;
+ FindSymbol:=0;
+End;
+
+Procedure DelSpaceNum(i:Byte;Var s: AllStr);
+Var j,k : Byte;
+Begin
+if i>0 Then
+For j:=1 To i Do
+  Begin
+   k:=Pos(' ',s);
+   Delete(s,k,1);
+  End;
+End;
+
+
+Procedure MemC;
+Var ls : LongInt;
+    s: TDateString;
+Begin
+Ls := MemAvail;
+Str(ls:12, S);
+MessageBox(#3+s,Nil,mfInformation+mfCancelButton);
+End;
+
+Procedure MemCc(s: String);
+Begin
+MessageBox(#3+s,Nil,mfInformation+mfCancelButton);
+End;
+
+Procedure EndClose(R:Boolean);
+Var ls : LongInt;
+    s: TDateString;
+Begin
+End;
+
+
+
+Function RecognizReal(R:Real;Z,M:Byte):StrName;
+Var i,j,k,l : Byte;
+    s : StrName;
+Begin
+RecognizReal[0]:=#0;
+ Str(R:Z:M,S);
+ j:=Pos('.',s);
+ If J<>0 Then
+ Begin
+ k:=0;
+ l:=0;
+ For i:=j-1 DownTo 1 Do
+  Begin
+   If s[i]<>' ' Then Inc(k);
+   If k=3 Then
+     Begin
+      If i<>1 Then
+      Begin
+      Insert(#39,s,i);
+         Inc(l);
+      k:=0;
+      End;
+     End;
+  End;
+  DelSpaceNum(l,s);
+  End
+  Else s[0]:=#0;
+RecognizReal:=S;
+End;
+
+
+Function Recogniz(S:AllStr):StrName;
+Var i,j,k,l : Byte;
+Begin
+ Recogniz[0]:=#0;
+ j:=Pos('.',s);
+ If J<>0 Then
+ Begin
+ k:=0;
+ l:=0;
+ For i:=j-1 DownTo 1 Do
+  Begin
+   If s[i]<>' ' Then Inc(k);
+   If k=3 Then
+     Begin
+      If i<>1 Then
+      Begin
+      Insert(#39,s,i);
+      Inc(l);
+      k:=0;
+      End;
+     End;
+  End;
+DelSpaceNum(l,s);
+  End
+  Else
+  s[0]:=#0;
+Recogniz:=S;
+End;
+
+
+Procedure WordToBit2 (n:Word; Var b : Maska2);
+  Var i : Word;
+Begin
+ For i:=2 DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+Procedure WordToBit3 (n:Word; Var b : Maska3);
+  Var i : Word;
+Begin
+ For i:=3 DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+Procedure WordToBit6 (n:Word; Var b : Maska6);
+  Var i : Word;
+Begin
+ For i:=6 DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+
+Procedure WordToBit24 (n:Word; Var b : Maska6);
+  Var i : Word;
+Begin
+ For i:=CShkala DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+Procedure WordToBit7 (n:Word; Var b : Maska7);
+  Var i : Word;
+Begin
+ For i:=7 DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+Procedure WordToBit8 (n:Word; Var b : Maska8);
+  Var i : Word;
+Begin
+ For i:=8 DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+Procedure WordToBit9 (n:Word; Var b : Maska9);
+  Var i : Word;
+Begin
+ For i:=Max9 DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+Procedure WordToBit10 (n:Word; Var b : Maska10);
+  Var i : Word;
+Begin
+ For i:=Max10 DownTo 1 Do
+  Begin
+   if odd(n) Then b[i]:=1 Else b[i]:=0;
+   n:=n Shr 1;
+  End;
+End;
+
+Function Stepen(i:Word):Word;
+Var j,l: Word;
+Begin
+ Stepen:=1;
+ j:=1;
+ For l:=1 To i Do j:=j*2;
+ Stepen:=j;
+End;
+
+
+Procedure BitToWord2 ( b : Maska2; Var n:Word);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To 2 Do
+  Begin
+  N:=N+b[i]*Stepen(2-i);
+  End;
+End;
+
+Procedure BitToWord3 ( b : Maska3; Var n:Word);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To 3 Do
+  Begin
+  N:=N+b[i]*Stepen(3-i);
+  End;
+End;
+
+Procedure BitToWord6 ( b : Maska6; Var n:Word);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To 6 Do
+  Begin
+  N:=N+b[i]*Stepen(6-i);
+  End;
+End;
+
+Procedure BitToWord24 ( b : Maska24; Var n:LongInt);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To CShkala Do
+  Begin
+  N:=N+b[i]*Stepen(CShkala-i);
+  End;
+End;
+
+Procedure BitToWord7 ( b : Maska7; Var n:Word);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To 7 Do
+  Begin
+  N:=N+b[i]*Stepen(7-i);
+  End;
+End;
+
+Procedure BitToWord8 ( b : Maska8; Var n:Word);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To 8 Do
+  Begin
+  N:=N+b[i]*Stepen(8-i);
+  End;
+End;
+
+Procedure BitToWord9 ( b : Maska9; Var n:Word);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To Max9 Do
+  Begin
+  N:=N+b[i]*Stepen(Max9-i);
+  End;
+End;
+
+Procedure BitToWord10 ( b : Maska10; Var n:Word);
+  Var i : Word;
+Begin
+ N:=0;
+ For i:=1 To Max10 Do
+  Begin
+  N:=N+b[i]*Stepen(Max10-i);
+  End;
+End;
+
+(*
+
+Procedure ConvertBak(Var b:MaskaBak);
+Var l : Byte;
+Begin
+ l:=b[1];
+ b[1]:=b[5];
+ b[5]:=l;
+ l:=b[2];
+ b[2]:=b[4];
+ b[4]:=l;
+End;
+
+
+
+Procedure ConvertNew(Var b:MaskaNew);
+Var l : Byte;
+Begin
+ l:=b[1];
+ b[1]:=b[8];
+ B[8]:=l;
+ l:=b[2];
+ b[2]:=b[7];
+ B[7]:=l;
+ l:=b[3];
+ b[3]:=b[6];
+ B[6]:=l;
+ l:=b[4];
+ b[4]:=b[5];
+ B[5]:=l;
+End;
+*)
+
+Procedure Convert7(Var b:Maska7);
+Var l,k : Byte;
+    w : Maska7;
+Begin
+ k:=7;
+ For l:=1 To 7 Do
+  Begin
+  w[k]:=b[l];
+  Dec(k);
+  End;
+  b:=w;
+
+End;
+
+Procedure Convert6(Var b:Maska6);
+Var l,k : Byte;
+    w : Maska6;
+Begin
+ k:=6;
+ For l:=1 To 6 Do
+  Begin
+  w[k]:=b[l];
+  Dec(k);
+  End;
+  b:=w;
+End;
+
+Procedure Convert8(Var b:Maska8);
+Var l,k : Byte;
+    w : Maska8;
+Begin
+ k:=8;
+ For l:=1 To 8 Do
+  Begin
+  w[k]:=b[l];
+  Dec(k);
+  End;
+  b:=w;
+End;
+
+Procedure Convert9(Var b:Maska9);
+Var l,k : Byte;
+    w : Maska9;
+Begin
+ k:=Max9;
+ For l:=1 To Max9 Do
+  Begin
+  w[k]:=b[l];
+  Dec(k);
+  End;
+  b:=w;
+End;
+
+Procedure Convert10(Var b:Maska10);
+Var l,k : Byte;
+    w : Maska10;
+Begin
+ k:=Max10;
+ For l:=1 To Max10 Do
+  Begin
+  w[k]:=b[l];
+  Dec(k);
+  End;
+  b:=w;
+End;
+
+Procedure Convert24(Var b:Maska24);
+Var l,k : Byte;
+    w :  Maska24;
+Begin
+ k:=CShkala;
+ For l:=1 To CShkala Do
+  Begin
+  w[k]:=b[l];
+  Dec(k);
+  End;
+  b:=w;
+End;
+
+
+
+Procedure Convert3(Var b:Maska3);
+Var l : Byte;
+Begin
+ l:=b[1];
+ b[1]:=b[3];
+ b[3]:=l;
+End;
+
+
+Procedure Convert2(Var b:Maska2);
+Var l : Byte;
+Begin
+ l:=b[1];
+ b[1]:=b[2];
+ b[2]:=l;
+End;
+
+Procedure AInfo(Const S : StrName);
+var
+  R : TRect;
+  Control : PView;
+Begin
+ClearFind;
+If Not(Glob.Show) And Not(Glob.ShowMsg) Then
+Begin
+Glob.Show:=True;
+R.Assign(30, 8, 30+Ord(S[0])+6, 13);
+New(Inf, Init(R, ''));
+Inf^.Palette := dpBlueDialog;
+Inf^.Flags := Inf^.Flags and not(wfMove or wfClose);
+Inf^.Options := Inf^.Options or ofCenterX or ofCenterY;
+{Inf^.HelpCtx := $A050;}
+R.Assign(4, 2, 4+Ord(S[0]), 3);
+Control := New(PStaticText{ColoredText}, Init(R, #3+S){, $1E)});
+Inf^.Insert(Control);                {Минуточку...}
+Inf^.SelectNext(False);
+Application^.Insert(Inf);
+{Application^.Idle;}
+End;
+End;
+
+Procedure AInfoMsg(Const S : SertifStr);
+var
+  R : TRect;
+  Enable : Boolean;
+Begin
+ClearFind;
+Enable:=True;
+If Not(Glob.Show) And Not(Glob.ShowMsg) Then
+Begin
+Glob.ShowMsg:=True;
+R.Assign(78-Ord(S[0])-2, 21, 78, 22);
+InfMsg := New(PColoredText, Init(R,' '+S,$4f));
+InfMsg^.SetState(InfMsg^.State+sfShadow, Enable);
+Application^.Insert(InfMsg);
+{Application^.Idle;}
+End;
+End;
+
+
+Procedure AInfoNetMsg(Const S : SertifStr);
+var
+  R : TRect;
+  Enable : Boolean;
+Begin
+Enable:=True;
+ClearFind;
+If Not(Glob.ShowNetMsg) Then
+Begin
+Glob.ShowNetMsg:=True;
+R.Assign(78-Ord(S[0])-1-7, 21, 78, 22);
+NetInfMsg := New(PColoredText, Init(R,' Сеть: '+S,$2F));
+NetInfMsg^.SetState(NetInfMsg^.State+sfShadow, Enable);
+Application^.Insert(NetInfMsg);
+{Application^.Idle;}
+End;
+End;
+
+Procedure DInfoNetMsg(Const S : SertifStr);
+var
+  R : TRect;
+  Enable : Boolean;
+Begin
+Enable:=True;
+ClearFind;
+If Not(Glob.ShowNetMsg) Then
+Begin
+Glob.ShowNetMsg:=True;
+R.Assign(78-Ord(S[0])-1-7, 21, 78, 22);
+NetInfMsg := New(PColoredText, Init(R,' Сеть: '+S,$2f));
+NetInfMsg^.SetState(NetInfMsg^.State+sfShadow, Enable);
+Desktop^.Insert(NetInfMsg);
+End;
+End;
+
+{Procedure DInfoMsg(Const S : StrName);
+var
+  R : TRect;
+Begin
+If Not(Glob.ShowMsg) Then
+Begin
+
+R.Assign(78-Ord(S[0])-4, 21, 78, 23);
+InfMsg := New(PButton, Init(R, S,cmNone,bfNormal));
+Desktop^.Insert(InfMsg);
+Glob.ShowMsg:=True;
+End;
+End;}
+
+
+Procedure DInfoMsg(Const S : SertifStr);
+var
+  R : TRect;
+  Enable : Boolean;
+Begin
+Enable:=True;
+ClearFind;
+NoInfo;
+If Not(Glob.Show) And Not(Glob.ShowMsg) Then
+Begin
+Glob.ShowMsg:=True;
+R.Assign(78-Ord(S[0])-2, 21, 78, 22);
+InfMsg := New(PColoredText, Init(R,' '+S,$4f));
+InfMsg^.SetState(InfMsg^.State+sfShadow, Enable);
+Desktop^.Insert(InfMsg);
+InfMsg^.HelpCtx:=$E002;
+End;
+End;
+
+
+
+
+Procedure DInfo(Const S : StrName);
+var
+  R : TRect;
+  Control : PView;
+Begin
+If Not(Glob.Show) And Not(Glob.ShowMsg) Then
+Begin
+ClearFind;
+Glob.Show:=True;
+R.Assign(30, 8, 30+Ord(S[0])+6, 13);
+New(Inf, Init(R, ''));
+Inf^.Palette := dpBlueDialog;
+Inf^.Flags := Inf^.Flags and not(wfMove or wfClose);
+Inf^.Options := Inf^.Options or ofCenterX or ofCenterY;
+R.Assign(4, 2, 4+Ord(S[0]), 3);
+Control := New(PStaticText, Init(R, #3+S));
+Inf^.Insert(Control);
+Inf^.SelectNext(False);
+Desktop^.Insert(Inf);
+{Application^.Idle;}
+End;
+End;
+
+
+
+
+Procedure NoInfo;
+Var Event : TEvent;
+Begin
+{ClearFind;}
+If Glob.Show Then
+Begin
+Dispose(Inf,Done);
+Glob.ShoW:=False;
+  GetKeyEvent(Event);
+  While Event.What And evKeyDown <> 0 Do
+   Begin
+    Application^.ClearEvent(Event);
+    GetKeyEvent(Event);
+   End;
+End;
+End;
+
+
+
+Procedure NoInfoMsg;
+Var Event : TEvent;
+Begin
+If Glob.ShowMsg Then
+Begin
+ClearFind;
+Dispose(InfMsg,Done);
+Glob.ShoWMsg:=False;
+  GetKeyEvent(Event);
+  While Event.What And evKeyDown <> 0 Do
+   Begin
+    Application^.ClearEvent(Event);
+    GetKeyEvent(Event);
+   End;
+End;
+End;
+
+Procedure NoNetInfoMsg;
+Var Event : TEvent;
+Begin
+If Glob.ShowNetMsg Then
+Begin
+ClearFind;
+Dispose(NetInfMsg,Done);
+Glob.ShoWNetMsg:=False;
+  GetKeyEvent(Event);
+  While Event.What And evKeyDown <> 0 Do
+   Begin
+    Application^.ClearEvent(Event);
+    GetKeyEvent(Event);
+   End;
+End;
+End;
+
+
+Function IncData(D:TDateString):TDateString;
+Var {DateMask : String[CDate];}
+    l : LongInt;
+Begin
+{ DateMask:=InternationalDate(False,True);}
+ l:=DateStringToDate(DateMask,D);
+ Inc(l);
+ IncData:=DateToDateString(DateMask,L);
+End;
+
+
+
+Function TestDate(Const s:TDateString;Var l:LongInt) : Boolean;
+Var Y,M,D : Integer;
+    s1 : TDateString;
+    Code : Integer;
+Begin
+ TestDate := False;
+ s1 := Copy (s,1,2);
+ Val (s1,d,Code);
+ If (s1[0]<>#2)Or(Code <> 0) Then Exit;
+ s1 := Copy (s,4,2);
+ Val (s1,M,Code);
+ If (s1[0]<>#2)Or(Code <> 0) Then Exit;
+ s1 := Copy (s,7,2);
+
+ If StrToInt(s1)<95 Then
+     Begin
+      Insert('20',s1,1);
+     End;
+
+ Val (s1,Y,Code);
+ If ((s1[0]<>#4)And(s1[0]<>#2))Or(Code <> 0) Then Exit;
+
+ If ValidDate(d,m,y) Then TestDate:=True;
+ L:=DMYToDate(d,m,y);
+End;
+
+
+Function  GetFileLocation3 (Const Sl : TDateString): Longint;
+Var Code : Integer;
+    L : LongInt;
+begin
+GetFileLocation3:=0;
+Val(sl,L,Code);
+If Code<>0 Then GetFileLocation3:=-1
+Else GetFileLocation3:=L;
+End;
+
+
+Function Location(Const P:PBox;Const s:ArtikulStr;b:Boolean):Word;
+Var w,i: Word;
+    st : AllStr;
+Begin
+location:=0;
+For i:=0 To P^.List^.Count Do
+  Begin
+  Location:=i;
+  st:=P^.GetText(i,P^.List^.Count);
+  If Not(b) Then w:=Pos('│',st)
+  Else w:=0;
+  st:=Copy(st,w+1,CArtikul);
+  If St=s Then
+               Break;
+  End;
+  If not(st=s) Then
+  Begin
+  Location:=0;
+  MessageBox(#3'Элемент ('+s+') в списке не найден!'^M+
+  #3'Заменяю его на следующий!'^M+
+  #3'Немедленно позовите программиста!',Nil,mfInsertInApp+mfError+mfCancelButton);
+  End;
+End;
+
+
+(*
+Procedure ReadINI(Var Res : LongInt);
+Var f : Text;
+    i : Byte;
+Begin
+Assign (f,'sklad.ini');
+Reset(f);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.Printer);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.Port);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.Computer);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.Orient);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.CopyPrihod);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.CopyPrz);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.CopyNkl);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.CopyOrder);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.CopySf);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.CopyReturn);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Lizensia);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,DefaultDoc);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,DefaultReal);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToModem);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToPrihod);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToMain);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToMarket);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToArc);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToReturn);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToProgram);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.PathToCorrect);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.ArcCode);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.ReportCode);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.Ini);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,MAsDocNumer);
+WordToBit6(MasDocNumer,MasDoc);
+For i:=1 To 7 Do
+If MasDoc[i]=1 Then MasDoc[i]:=0
+Else MasDoc[i]:=1;
+{MasDoc[2]:=1;}
+Res := IOResult;
+
+If Res <> 0 Then Exit Else Readln(f,DebitDocNumer);
+WordToBit6(DebitDocNumer,DebitDoc);
+For i:=1 To 7 Do
+If DebitDoc[i]=1 Then DebitDoc[i]:=0
+Else DebitDoc[i]:=1;
+
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,PathToTemp);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.FullName);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.FullSertif);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Print.FullSkidka);
+Res := IOResult;
+If Res <> 0 Then Exit;
+Close (f);
+
+Res := IOResult;
+If Res <> 0 Then Exit
+End;
+*)
+
+Procedure NewTmpAndAnalys;
+Var c : Word;
+Begin
+If FindParam('/TERMINAL') Then
+Begin
+Path.ToTemp:=Path.ToProgram+'Temp'+'\'+Rek.Kod+'_'+CurrentPassword;
+If Not TestExistCatalog(Path.ToTemp)Then
+Begin
+MkDir(Path.ToTemp);
+c:=IoResult;
+if c <> 0 then
+  MessageBox(#3'Ошибка создания '+Path.ToTemp+' Код:'+IntToStr(c,CKol),Nil,mfError+mfCancelButton);
+End;
+Path.ToTemp:=Path.ToTemp+'\';
+
+
+Path.ToAnalys:=Path.ToProgram+'Analys'+'\'+Rek.Kod+'_'+CurrentPassword;
+If Not TestExistCatalog(Path.ToAnalys)Then
+Begin
+MkDir(Path.ToAnalys);
+c:=IoResult;
+if c <> 0 then
+  MessageBox(#3'Ошибка создания '+Path.ToAnalys+' Код:'+IntToStr(c,CKol),Nil,mfError+mfCancelButton);
+End;
+Path.ToAnalys:=Path.ToAnalys+'\';
+End;{If Terminal}
+End;
+
+
+
+Procedure NewTmpAndAnalysLocal;
+Var c : Word;
+   ss : ArtikulStr;
+Begin
+ss:=Rek.Kod;
+ss:=IntToStr(StrToInt(Rek.Kod),CMantissa);
+DelSpace(SS);
+RFormatZerro(ss,CMantissa);
+If Not(FindParam('/TERMINAL') ) Then
+Begin
+Path.ToTemp:=Path.ToTemp+ss;
+If Not TestExistCatalog(Path.ToTemp)Then
+Begin
+MkDir(Path.ToTemp);
+c:=IoResult;
+if c <> 0 then
+  MessageBox(#3'Ошибка создания '+Path.ToTemp+' Код:'+IntToStr(c,CKol),Nil,mfError+mfCancelButton);
+End;
+Path.ToTemp:=Path.ToTemp+'\';
+Path.ToAnalys:=Path.ToAnalys+ss;
+If Not TestExistCatalog(Path.ToAnalys)Then
+Begin
+MkDir(Path.ToAnalys);
+c:=IoResult;
+if c <> 0 then
+  MessageBox(#3'Ошибка создания '+Path.ToAnalys+' Код:'+IntToStr(c,CKol),Nil,mfError+mfCancelButton);
+End;
+Path.ToAnalys:=Path.ToAnalys+'\';
+End;{If Terminal}
+End;
+
+
+
+
+Procedure ReadNewINI(Var Res : LongInt);
+Var f   : Text;
+    c,i : Byte;
+Begin
+Assign (f,'sklad.ini');
+Reset(f);
+Res := IOResult;
+{     ToProgram: String[CSertif];1
+     ToPrihod : String[CSertif]; 2
+     ToMarket : String[CSertif]; 3
+     ToReturn : String[CSertif]; 4
+     ToCorrect: String[CSertif]; 5
+     ToClient : String[CSertif]; 6
+     ToDolg   : String[CSertif]; 7
+ToClientReturn: String[CSertif]; 8
+ToClientOplata: String[CSertif]; 9
+      ToOplata: String[CSertif]; 0
+    ToOperator: String[CSertif]; 1
+        ToName: String[CSertif]; 2
+      ToRazdel: String[CSertif]; 3
+       ToSklad: String[CSertif]; 4
+      ToSkidki: String[CSertif]; 5
+       ToModem: String[CSertif]; 6
+      ToArchiv: String[CSertif]; 7
+    ArchivCode: String[CSertif]; 8
+      ToReport: String[CSertif]; 9
+    ToProtocol: String[CSertif]; 0
+        Reserv: String[CSertif]; 1
+      FileFlag: String[CSertif]; 2
+        ToTemp: String[CSertif]; 3
+
+}
+
+If Res <> 0 Then Exit Else Readln(f,Path.ToProgram);{1}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToPrihod);{2}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToMarket);{3}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToReturn);{4}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToCorrect);{5}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToClient);{6}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToDolg);{7}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToClientReturn);{8}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToClientOplata);{9}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToOplata);{10}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToOperator);{11}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToName);{12}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToRazdel);{13}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToSklad);{14}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToSkidki);{15}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToModem);{16}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToArchiv);{17}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ArchivCode);{18}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToReport);{19}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToProtocol);{20}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToRewisia);{21}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.FileFlag);{22}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToTemp);{23}
+Res := IOResult;
+
+{
+If FindParam('/TERMINAL') Then
+Begin
+Path.ToTemp:=SklTmp+'\'+SklTmp1;
+If Not TestExistCatalog(Path.ToTemp)Then
+Begin
+MkDir(SklTmp);
+c:=IoResult;
+MkDir(Path.ToTemp);
+c:=IoResult;
+if c <> 0 then
+  MessageBox(#3'Ошибка создания '+Path.ToTemp+' Код:'+IntToStr(c,CKol),Nil,mfError+mfCancelButton);
+End;
+Path.ToTemp:=Path.ToTemp+'\';
+End;
+}
+
+
+
+
+
+If Res <> 0 Then Exit Else Readln(f,Path.ToAnalys);{24}
+Res := IOResult;
+
+(*
+If FindParam('/TERMINAL') Then
+Begin
+Path.ToAnalys:={Path^.Dat.ToProgram+'Analys'}SklTmp+'\'+SklTmp2;
+If Not TestExistCatalog(Path.ToAnalys)Then
+Begin
+MkDir(SklTmp);
+c:=IoResult;
+MkDir(Path.ToAnalys);
+c:=IoResult;
+if c <> 0 then
+  MessageBox(#3'Ошибка создания '+Path.ToAnalys+' Код:'+IntToStr(c,CKol),Nil,mfError+mfCancelButton);
+End;
+Path.ToAnalys:=Path.ToAnalys+'\';
+End;
+*)
+
+
+If Res <> 0 Then Exit Else Readln(f,Path.ToBarter);{24}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToExport);{24}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Path.ToImport);{24}
+Res := IOResult;
+{
+     Printer  : Word;        1
+     Orient   : Word;        2
+     Port     : Word;        3
+     Computer : AllStr;      4
+     Ini      : AllStr;      5
+    CopyPrihod: LongInt;     6
+    CopyPrz   : LongInt;     7
+    CopyNkl   : LongInt;     8
+    CopyOrder : LongInt;     9
+    CopySF    : LongInt;     0
+    CopyReturn: LongInt;     1
+  FullSkidka   : Word;       2
+  FullSertif   : Word;       3
+  FullAkzis    : Word;       4
+  FullName     : Word;       5
+}
+
+
+If Res <> 0 Then Exit Else Readln(f,NPrint.Printer);{1}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.Orient);{2}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.Port);{3}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.SwapDisk);{3}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.Computer);{4}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.Ini);{5}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.CopyPrihod);{6}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.CopyPrz);{7}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.CopyNkl);{8}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.CopyOrder);{9}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.CopySF);{10}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.CopyReturn);{11}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.FullSkidka);{12}
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.FullSertif);{13}
+
+
+WordToBit3(NPrint.FullSertif,PrintSertifDoc);
+Convert3(PrintSertifDoc);
+
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,NPrint.FullAkzis);{14}
+Res := IOResult;
+
+WordToBit3(NPrint.FullAkzis,PrintAkzisDoc);
+Convert3(PrintAkzisDoc);
+
+Res := IOResult;
+
+
+If Res <> 0 Then Exit Else Readln(f,NPrint.FullName);{15}
+Res := IOResult;
+
+
+
+{вспомогательные}
+If Res <> 0 Then Exit Else Readln(f,Lizensia);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,DefaultDoc);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,DefaultReal);
+Res := IOResult;
+
+
+If Res <> 0 Then Exit Else Readln(f,MAsDocNumer);
+WordToBit9(MasDocNumer,MasDoc);
+For i:=1 To Max9 Do
+If MasDoc[i]=1 Then MasDoc[i]:=0
+Else MasDoc[i]:=1;
+{MasDoc[2]:=1;}
+Res := IOResult;
+
+If Res <> 0 Then Exit Else Readln(f,DebitDocNumer);
+WordToBit9(DebitDocNumer,DebitDoc);
+For i:=1 To Max9 Do
+If DebitDoc[i]=1 Then DebitDoc[i]:=0
+Else DebitDoc[i]:=1;
+
+Res:=IOREsult;
+If Res<>0 Then Exit Else Readln(f,NPrint.Messag);
+Res:=IOREsult;
+If Res<>0 Then Exit Else Readln(f,NPrint.TimeStart);
+Res:=IOREsult;
+If Res<>0 Then Exit Else Readln(f,NPrint.TimeStop);
+Res:=IOREsult;
+If Res<>0 Then Exit Else Readln(f,NPrint.TextMessag);
+Res := IOResult;
+
+If Res <> 0 Then Exit Else Readln(f,DefaultLizensia);
+Res:=IOResult;
+If Res <> 0 Then Exit Else Readln(f,ShowClients);
+Res:=IOResult;
+If Res <> 0 Then Exit Else Readln(f,ClientRP);
+Res:=IOResult;
+
+If Res <> 0 Then Exit Else Readln(f,PrihodMax);
+Res:=IOResult;
+If Res <> 0 Then Exit Else Readln(f,ShowNumer);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,ShowSertif);
+Res := IOResult;
+
+For c:=1 To 15 Do
+ Begin
+  Readln(f,ClassNAme[c]);
+ End;
+
+For c:=1 To 6 Do
+ Begin
+  Readln(f,MYS[c]);
+ End;
+
+
+Res := IOResult;
+
+
+Close (f);
+If Res <> 0 Then Exit;
+{
+NewTmpAndAnalys;
+NewTmpAndAnalysLocal;
+}
+End;
+
+Procedure WriteNewINI(Var Res : LongInt);
+Var f   : Text;
+    i,c : Byte;
+Begin
+Assign (f,'sklad.ini');
+Rewrite(f);
+Res := IOResult;
+{     ToProgram: String[CSertif];1
+     ToPrihod : String[CSertif]; 2
+     ToMarket : String[CSertif]; 3
+     ToReturn : String[CSertif]; 4
+     ToCorrect: String[CSertif]; 5
+     ToClient : String[CSertif]; 6
+     ToDolg   : String[CSertif]; 7
+ToClientReturn: String[CSertif]; 8
+ToClientOplata: String[CSertif]; 9
+      ToOplata: String[CSertif]; 0
+    ToOperator: String[CSertif]; 1
+        ToName: String[CSertif]; 2
+      ToRazdel: String[CSertif]; 3
+       ToSklad: String[CSertif]; 4
+      ToSkidki: String[CSertif]; 5
+       ToModem: String[CSertif]; 6
+      ToArchiv: String[CSertif]; 7
+    ArchivCode: String[CSertif]; 8
+      ToReport: String[CSertif]; 9
+    ToProtocol: String[CSertif]; 0
+        Reserv: String[CSertif]; 1
+      FileFlag: String[CSertif]; 2
+        ToTemp: String[CSertif]; 3
+
+}
+
+If Res <> 0 Then Exit Else Writeln(f,Path.ToProgram);{1}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToPrihod);{2}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToMarket);{3}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToReturn);{4}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToCorrect);{5}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToClient);{6}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToDolg);{7}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToClientReturn);{8}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToClientOplata);{9}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToOplata);{10}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToOperator);{11}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToName);{12}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToRazdel);{13}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToSklad);{14}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToSkidki);{15}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToModem);{16}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToArchiv);{17}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ArchivCode);{18}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToReport);{19}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToProtocol);{20}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToRewisia);{21}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.FileFlag);{22}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToTemp);{23}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToAnalys);{24}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToBArter);{24}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToExport);{24}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Path.ToImport);{24}
+Res := IOResult;
+{
+     Printer  : Word;        1
+     Orient   : Word;        2
+     Port     : Word;        3
+     Computer : AllStr;      4
+     Ini      : AllStr;      5
+    CopyPrihod: LongInt;     6
+    CopyPrz   : LongInt;     7
+    CopyNkl   : LongInt;     8
+    CopyOrder : LongInt;     9
+    CopySF    : LongInt;     0
+    CopyReturn: LongInt;     1
+  FullSkidka   : Word;       2
+  FullSertif   : Word;       3
+  FullAkzis    : Word;       4
+  FullName     : Word;       5
+}
+
+
+If Res <> 0 Then Exit Else Writeln(f,NPrint.Printer);{1}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.Orient);{2}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.Port);{3}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.SWAPDisk);{3}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.Computer);{4}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.Ini);{5}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.CopyPrihod);{6}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.CopyPrz);{7}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.CopyNkl);{8}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.CopyOrder);{9}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.CopySF);{10}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.CopyReturn);{11}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.FullSkidka);{12}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.FullSertif);{13}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.FullAkzis);{14}
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,NPrint.FullName);{15}
+Res := IOResult;
+
+{вспомогательные}
+If Res <> 0 Then Exit Else Writeln(f,Lizensia);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,DefaultDoc);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,DefaultReal);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,MAsDocNumer);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,DebitDocNumer);
+
+Res:=IOREsult;
+If Res<>0 Then Exit Else Writeln(f,NPrint.Messag);
+Res:=IOREsult;
+If Res<>0 Then Exit Else Writeln(f,NPrint.TimeStart);
+Res:=IOREsult;
+If Res<>0 Then Exit Else Writeln(f,NPrint.TimeStop);
+Res:=IOREsult;
+If Res<>0 Then Exit Else Writeln(f,NPrint.TextMessag);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,DefaultLizensia);
+Res:=IOResult;
+If Res <> 0 Then Exit Else Writeln(f,ShowClients);
+Res:=IOResult;
+If Res <> 0 Then Exit Else Writeln(f,ClientRP);
+Res:=IOResult;
+If Res <> 0 Then Exit Else Writeln(f,PrihodMax);
+Res:=IOResult;
+If Res <> 0 Then Exit Else Writeln(f,ShowNumer);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,ShowSertif);
+Res := IOResult;
+
+For c:=1 To 15 Do
+ Begin
+  Writeln(f,ClassNAme[c]);
+ End;
+
+For c:=1 To 6 Do
+ Begin
+  Writeln(f,MYS[c]);
+ End;
+
+Res := IOResult;
+
+
+Close (f);
+If Res <> 0 Then Exit
+End;
+
+(*
+Procedure WriteINI(Var Res : LongInt);
+Var f : Text;
+    i : Byte;
+Begin
+Assign (f,'Sklad.ini');
+Rewrite(f);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.Printer);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.Port);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.Computer);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.Orient);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.CopyPrihod);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.CopyPrz);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.CopyNkl);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.CopyOrder);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.CopySf);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.CopyReturn);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Lizensia);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,DefaultDoc);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,DefaultReal);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToModem);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToPrihod);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToMain);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToMarket);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToArc);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToReturn);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToProgram);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.PathToCorrect);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.ArcCode);
+Res:=IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.ReportCode);
+Res:=IOResult;
+If Res <> 0 Then Exit Else writeln(f,Print.Ini);
+Res:=IOResult;
+If Res <> 0 Then Exit Else writeln(f,MasDocNumer);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,DebitDocNumer);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,PathToTemp);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.FullName);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.FullSertif);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Print.FullSkidka);
+Res := IOResult;
+If Res <> 0 Then Exit;
+
+Close (f);
+Res := IOResult;
+If Res <> 0 Then Exit
+End;
+*)
+
+
+Procedure WriteRek(Var Res : LongInt);
+Var f,fbak : Text;
+    c : Word;
+Begin
+Assign (f,'Sklad.inf');
+Rewrite(f);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Kod);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Name);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Adress);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Telefon);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.R_Sh);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Gde);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Gorod);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.INN);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Okonh);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.OKPO);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.AdressGruza);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.LizensiaOptL_V);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.LizensiaOptSig);
+Res := IOResult;
+For c:=1 To 5 Do
+Begin
+If Res <> 0 Then Exit Else writeln(f,Rek.LizensiaOptPiv[c]);
+Res := IOResult;
+End;
+If Res <> 0 Then Exit Else writeln(f,Rek.Svidetelstvo);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Header);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Shapka1);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Shapka2);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.Shapka3);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Otdel[1]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Otdel[2]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Otdel[3]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Otdel[4]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Writeln(f,Rek.Otdel[5]);
+Res := IOResult;
+If Res <> 0 Then Exit Else writeln(f,Rek.SkladsName);
+Res := IOResult;
+If Res <> 0 Then Exit;
+Close (f);
+Res := IOResult;
+If Res <> 0 Then Exit;
+GlobalSkladsName:=GetClientField(FClient,Rek.Kod,1);
+DelSpaceRight(GlobalSkladsName);
+GlobalSkladsName:=' Склад:'+GlobalSkladsName+'  Дата:'+FDAte+' ';
+
+DeskTop^.Redraw;
+End;
+
+
+Procedure ReadRek(Var Res : LongInt);
+Var f : Text;
+   c : Word;
+Begin
+Assign (f,'Sklad.inf');
+Reset(f);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Kod);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Name);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Adress);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Telefon);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.R_Sh);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Gde);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Gorod);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.INN);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Okonh);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.OKPO);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.AdressGruza);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.LizensiaOptL_V);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.LizensiaOptSig);
+Res := IOResult;
+{If Res <> 0 Then Exit Else Readln(f,Rek.LizensiaOptPiv);
+Res := IOResult;}
+
+For c:=1 To 5 Do
+Begin
+If Res <> 0 Then Exit Else readln(f,Rek.LizensiaOptPiv[c]);
+Res := IOResult;
+End;
+
+If Res <> 0 Then Exit Else Readln(f,Rek.Svidetelstvo);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Header);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Shapka1);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Shapka2);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Shapka3);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Otdel[1]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Otdel[2]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Otdel[3]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Otdel[4]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.Otdel[5]);
+Res := IOResult;
+If Res <> 0 Then Exit Else Readln(f,Rek.SkladsName);
+Res := IOResult;
+If Res <> 0 Then Exit;
+Close (f);
+Res := IOResult;
+If Res <> 0 Then Exit;
+
+{
+GlobalSkladsName:=GetClientField(FClient,Rek.Kod,1);
+DelSpaceRight(GlobalSkladsName);
+GlobalSkladsName:=' Склад:'+GlobalSkladsName+'  Дата:'+FDAte+' ';
+}
+
+DeskTop^.Redraw;
+End;
+
+
+
+
+
+
+
+procedure Errors(Const St:ALLStr);
+var
+  D: PDialog;
+  Control: PView;
+  R: TRect;
+begin
+MessageBox(^M+#3+St,
+    nil, mfError + mfCancelButton);
+end;
+
+
+{
+Var MessageOfArc : PDialog;
+
+Procedure ShowInformArc;
+var
+  R : TRect;
+  Control : PView;
+begin
+R.Assign(26, 9, 54, 14);
+New(MessageOfArc, Init(R, ''));
+MessageOfArc^.Options := MessageOfArc^.Options or ofCenterX or ofCenterY;
+MessageOfArc^.Palette := dpBlueDialog;
+MessageOfArc^.Flags := MessageOfArc^.Flags and not wfMove;
+R.Assign(2, 2, 25, 3);
+Control := New(PStaticText, Init(R, 'Идет архивация данных'));
+MessageOfArc^.Insert(Control);
+MessageOfArc^.SelectNext(False);
+Desktop^.Insert(MessageOfArc);
+Application^.Idle;
+end;
+
+
+Procedure HideInformArc;
+begin
+Dispose(MessageOfArc,Done);
+end;
+}
+
+Procedure ArcBaza;
+Var r: Word;
+            begin
+
+{                 i:=IOResult;
+                  TextColor(White);TextBackGround(Blue);
+                  GotoXY(29,11);Writeln('╔═════════════════════════╗');
+                  GotoXY(29,12);Writeln('║ Идет архивация данных...║');
+                  GotoXY(29,13);Writeln('╚═════════════════════════╝');
+                  Delay(600);}
+  AInfo('Идет архивация данных...');{ShowInformArc;}
+  DoneSysError;
+  DoneEvents;
+  Application^.HideCursor;
+{ DoneVideo;}
+  DoneDosMem;
+  SWAPVECTORS;
+  exec (GetEnv('Comspec'),' /c '+Path.ArchivCode);
+  SWAPVECTORS;
+  R:=DosError;
+  InitDosMem;
+{ InitVideo;}
+  InitEvents;
+  InitSysError;
+
+                      NoInfo;
+  CursorLines:=1543;
+  Application^.Redraw;
+                      Case R Of
+                      0:MessageBox(#3^M+#3'Архивация успешно завершена !',Nil,mfInformation+mfCancelButton);
+                      2:MessageBox(#3^M+#3'Файл не найден !',Nil,mfError+mfCancelButton);
+                      3:MessageBox(#3^M+#3'Путь не найден !',Nil,mfError+mfCancelButton);
+                      5:MessageBox(#3^M+#3'Доступ невозможен !',Nil,mfError+mfCancelButton);
+                      6:MessageBox(#3^M+#3'Неверное устройство !',Nil,mfError+mfCancelButton);
+                      8:MessageBox(#3^M+#3'Недостаточно памяти !',Nil,mfError+mfCancelButton);
+                      10:MessageBox(#3^M+#3'Неверные настройки !',Nil,mfError+mfCancelButton);
+                      11:MessageBox(#3^M+#3'Неверный формат !',Nil,mfError+mfCancelButton);
+                      18:MessageBox(#3^M+#3'Слишком много файлов !',Nil,mfError+mfCancelButton);
+                        Else;
+                       End;
+                  AddProtocol('Полная архивация данных!','','');
+                end;
+
+(*
+procedure RunModem;
+begin
+  DoneSysError;
+  DoneEvents;
+  Application^.HideCursor;
+  DoneVideo;
+  DoneDosMem;
+  SwapVectors;
+  Exec(Path.TOModem, '');
+  SwapVectors;
+  InitDosMem;
+  InitVideo;
+  InitEvents;
+  InitSysError;
+  CursorLines:=1543;
+  Application^.Redraw;
+                      Case DosError Of
+                      2:MessageBox(#3^M+#3'Файл не найден !',Nil,mfError+mfCancelButton);
+                      3:MessageBox(#3^M+#3'Путь не найден !',Nil,mfError+mfCancelButton);
+                      5:MessageBox(#3^M+#3'Доступ невозможен !',Nil,mfError+mfCancelButton);
+                      6:MessageBox(#3^M+#3'Неверное устройство !',Nil,mfError+mfCancelButton);
+                      8:MessageBox(#3^M+#3'Недостаточно памяти !',Nil,mfError+mfCancelButton);
+                     10:MessageBox(#3^M+#3'Неверные настройки !',Nil,mfError+mfCancelButton);
+                     11:MessageBox(#3^M+#3'Неверный формат !',Nil,mfError+mfCancelButton);
+                     18:MessageBox(#3^M+#3'Слишком много файлов !',Nil,mfError+mfCancelButton);
+                        Else;
+                       End;
+
+end;
+*)
+
+var
+    ItogFile  : File Of NewItogType;
+    NewItogFile  : File Of NewItogType;
+    Itg : PNewItogType;
+    {
+    Itg : PItogType;
+    NItg : PNewItogType;
+
+var
+}
+    NItg : PNewItogType;
+
+
+
+
+Procedure CalcToDaymarket(TDate:TDateString;Var Itg:PNewItogType);
+Var MarketFile : File Of SuperMarketType;
+    E : PSuperMarketType;
+    i : Byte;
+Begin
+ Assign(MarketFile,Path.ToMarket+TDate+'.mrk');
+ i:=IOResult;
+ Reset(MarketFile);
+ i:=IOResult;
+ If i <> 0 Then
+  Begin
+   Exit;
+  End;
+ New(E,Init);
+ While Not(Eof(MarketFile)) Do
+  Begin
+   Read(MarketFile,E^.Dat);
+   If (E^.Dat.Active) And
+(Not(E^.Dat.Realiz) Or ((E^.Dat.Realiz)And(E^.Dat.DocSelector in [5,6,7,8]))) Then
+   Begin
+    For i:=1 To E^.Dat.Amount Do
+     Begin
+      If (E^.Dat.MarketElement[i].BazKod=Itg^.Dat.BazKod) Then
+       Begin
+        DelSpace(E^.Dat.MarketElement[i].Input.Kol);
+        DelSpace(E^.Dat.MarketElement[i].Input.R_Zena);
+        DelSpace(Itg^.Dat.MrkC);
+        DelSpace(Itg^.Dat.MrkS);
+        DelSpace(Itg^.Dat.MrkB);
+        DelSpace(Itg^.Dat.MrkEC);
+        DelSpace(Itg^.Dat.MrkEB);
+        DelSpace(Itg^.Dat.MrkES);
+        Case E^.Dat.OperatorSelector Of
+        0:Begin
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)+StrToInt(Itg^.Dat.MrkC)):CKol,
+     Itg^.Dat.MrkC);
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)*StrToReal(E^.Dat.MarketElement[i].Input.R_Zena)
+     +StrToReal(Itg^.Dat.MrkEC)):CIZena:CMantissa,Itg^.Dat.MrkEC);
+          End;
+        1:Begin
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)+StrToInt(Itg^.Dat.MrkS)):CKol,
+     Itg^.Dat.MrkS);
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)*StrToReal(E^.Dat.MarketElement[i].Input.R_Zena)
+     +StrToReal(Itg^.Dat.MrkES)):CIZena:CMantissa,Itg^.Dat.MrkES);
+          End;
+        2:Begin
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)+StrToInt(Itg^.Dat.MrkB)):CKol,
+     Itg^.Dat.MrkB);
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)*StrToReal(E^.Dat.MarketElement[i].Input.R_Zena)
+     +StrToReal(Itg^.Dat.MrkEB)):CIZena:CMantissa,Itg^.Dat.MrkEB);
+          End;
+        Else;
+        End;{CAse}
+        DelSpace(Itg^.Dat.MrkC);
+        DelSpace(Itg^.Dat.MrkB);
+        DelSpace(Itg^.Dat.MrkS);
+        DelSpace(Itg^.Dat.MrkEC);
+        DelSpace(Itg^.Dat.MrkEB);
+        DelSpace(Itg^.Dat.MrkES);
+        {Writeln('Пересчет позиции '+Itg^.Dat.BazKod+' завершен!');}
+       End;{If (E^.Dat.MarketElement[i].BazKod=Itg^.Dat.BazKod) Then}
+     End;{For}
+   End;
+  End;{While}
+ Dispose(E,Done);
+ Close(MArketFile);
+End;
+
+Procedure CalcNewToDaymarket(TDate:TDateString;Var RashetList:PBox);
+Const
+Shablon1=
+'    0            0.00     0            0.00     0            0.00     0            0.00     0 '+
+{12345│123456789012345│12345│123456789012345│12345│123456789012345│12345│123456789012345│12345}
+'           0.00     0            0.00';
+{123456789012345│12345│123456789012345│12345│123456789012345│12345│123456789012345│12345}
+Var MarketFile : MarketFileType;
+    E : PSuperMarketType;
+    i : Byte;
+    ws,s,ws1 : String;
+    L : Boolean;
+Begin
+ Assign(MarketFile,Path.ToMarket+TDate+'.mrk');
+ i:=IOResult;
+ Reset(MarketFile);
+ i:=IOResult;
+ If i <> 0 Then
+  Begin
+   Exit;
+  End;
+ New(E,Init);
+ While Not(Eof(MarketFile)) Do
+  Begin
+   ReadMarket(MarketFile,E);
+   If E^.Dat.Active Then
+   Begin
+  If ((Not(E^.Dat.Realiz)) Or ((E^.Dat.Realiz) And(E^.Dat.DocSelector in [5,6,7,8])))Then
+    For i:=1 To E^.Dat.Amount Do
+     Begin
+      If Not TestElement(E^.Dat.MarketElement[i].BazKod,RashetList) Then
+       Begin
+        l:=ProdagaWindow;
+        ProdagaWindow:=False;
+        s:=RashetList^.GetText(Location(RashetList,E^.Dat.MarketElement[i].BazKod,ProdagaWindow),
+        RashetList^.List^.Count);
+        DelSpace(E^.Dat.MarketElement[i].Input.R_Zena);
+        {Kol}
+        ws:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*3+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,Ckol);
+        Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)+StrToInt(ws)):CKol,ws);
+        {Summa}
+        ws1:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+(CKol+1+CIZena+1)*3+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,
+     CIZena);
+        Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)*StrToReal(E^.Dat.MarketElement[i].Input.R_Zena)
+       +StrToReal(ws1)):CIZena:CMantissa,ws1);
+        ws:=ws+'│'+ws1;
+        {Del BakString}
+        Delete(s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*3+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,CKol+1+CIZena);
+        {Inserting NewString}
+        Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*3+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector);
+
+        RashetList^.List^.AtFree(Location(RashetList,E^.Dat.MarketElement[i].BazKod,ProdagaWindow));
+        RashetList^.SetRange(RashetList^.List^.Count);
+        RashetList^.List^.Insert(NewStr(s));
+        RashetList^.SetRange(RashetList^.List^.Count);
+        ProdagaWindow:=l;
+
+       End{If TestElement Then}
+      Else
+       Begin{position not found in List}
+        s:='│'+E^.Dat.MarketElement[i].BazKod+'│    0            0.00 '+Shablon1;
+        Str(StrToInt(E^.Dat.MarketElement[i].Input.Kol):CKol,ws);
+        Str(StrToInt(E^.Dat.MarketElement[i].Input.Kol)*StrToReal(E^.Dat.MarketElement[i].Input.R_Zena)
+           :CIZena:CMantissa,ws1);
+        ws:=ws+'│'+ws1;
+        Delete(s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*3+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,CKol+1+CIZena);
+        {Inserting NewString}
+        Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*3+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector);
+        RashetList^.List^.Insert(NewStr(s));
+        RashetList^.SetRange(RashetList^.List^.Count);
+       End;{Else}
+
+     End;{For}
+   End;
+  End;{While}
+ Dispose(E,Done);
+ Close(MArketFile);
+End;
+
+Procedure CalcNewToDaymarket1(TDate:TDateString;Var NItg:PNewItogType);
+Var MarketFile : MarketFileType;
+    E : PSuperMarketType;
+    i : Byte;
+Begin
+ Assign(MarketFile,Path.ToMarket+TDate+'.mrk');
+ i:=IOResult;
+ Reset(MarketFile);
+ i:=IOResult;
+ If i <> 0 Then
+  Begin
+   Exit;
+  End;
+ New(E,Init);
+ While Not(Eof(MarketFile)) Do
+  Begin
+   ReadMarket(MarketFile,E);
+   If (E^.Dat.Active) And
+(Not(E^.Dat.Realiz) Or ((E^.Dat.Realiz)And(E^.Dat.DocSelector in [5,6,7,8]))) Then
+   Begin
+    For i:=1 To E^.Dat.Amount Do
+     Begin
+      If (E^.Dat.MarketElement[i].BazKod=NItg^.Dat.BazKod) Then
+       Begin
+        DelSpace(E^.Dat.MarketElement[i].Input.Kol);
+        DelSpace(E^.Dat.MarketElement[i].Input.R_Zena);
+        DelSpace(NItg^.Dat.MrkC);
+        DelSpace(NItg^.Dat.MrkS);
+        DelSpace(NItg^.Dat.MrkEC);
+        DelSpace(NItg^.Dat.MrkES);
+        Case E^.Dat.OperatorSelector Of
+        0:Begin
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)+StrToInt(NItg^.Dat.MrkC)):CKol,
+     NItg^.Dat.MrkC);
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)*StrToReal(E^.Dat.MarketElement[i].Input.R_Zena)
+     +StrToReal(NItg^.Dat.MrkEC)):CIZena:CMantissa,NItg^.Dat.MrkEC);
+          End;
+        1:Begin
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)+StrToInt(NItg^.Dat.MrkS)):CKol,
+     NItg^.Dat.MrkS);
+           Str((StrToInt(E^.Dat.MarketElement[i].Input.Kol)*StrToReal(E^.Dat.MarketElement[i].Input.R_Zena)
+     +StrToReal(NItg^.Dat.MrkES)):CIZena:CMantissa,NItg^.Dat.MrkES);
+          End;
+        Else;
+        End;{CAse}
+        DelSpace(NItg^.Dat.MrkC);
+        DelSpace(NItg^.Dat.MrkS);
+        DelSpace(NItg^.Dat.MrkEC);
+        DelSpace(NItg^.Dat.MrkES);
+        {Writeln('Пересчет позиции '+NItg^.Dat.BazKod+' завершен!');}
+       End;{If (E^.Dat.MarketElement[i].BazKod=NItg^.Dat.BazKod) Then}
+     End;{For}
+   End;
+  End;{While}
+ Dispose(E,Done);
+ Close(MArketFile);
+End;
+
+Procedure CalcNewTodayPrihod(TDate:TDateString;Var RashetList:PBox);
+Const
+Shablon1=
+'    0            0.00     0            0.00     0            0.00     0            0.00     0 '+
+{12345│123456789012345│12345│123456789012345│12345│123456789012345│12345│123456789012345│12345}
+'           0.00     0            0.00';
+{123456789012345│12345│123456789012345│12345│123456789012345│12345│123456789012345│12345}
+Var MarketFile : PrihodFileType;
+    E : PPrihodType;
+    i : Byte;
+    ws,s,ws1 : String;
+    l : Boolean;
+Begin
+ Assign(MarketFile,Path.ToPrihod+TDate+'.prh');
+ i:=IOResult;
+ Reset(MarketFile);
+ i:=IOResult;
+ If i <> 0 Then
+  Begin
+   Exit;
+  End;
+ New(E,Init);
+ While Not(Eof(MarketFile)) Do
+  Begin
+   ReadPrihod(MarketFile,E);
+   Begin
+    For i:=1 To E^.Dat.Amount Do
+     Begin
+      If Not TestElement(E^.Dat.PrihodElement[i].BazKod,RashetList) Then
+       Begin
+        l:=ProdagaWindow;
+        ProdagaWindow:=False;
+        s:=RashetList^.GetText(Location(RashetList,E^.Dat.PrihodElement[i].BazKod,ProdagaWindow),
+        RashetList^.List^.Count);
+        DelSpace(E^.Dat.PrihodElement[i].Input.R_Zena);
+        {Kol}
+        ws:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,Ckol);
+        Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)+StrToInt(ws)):CKol,ws);
+        {Summa}
+        ws1:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,CIZena);
+        Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)*StrToReal(E^.Dat.PrihodElement[i].Input.R_Zena)
+       +StrToReal(ws1)):CIZena:CMantissa,ws1);
+        ws:=ws+'│'+ws1;
+        {Del BakString}
+        Delete(s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,CKol+1+CIZena);
+        {Inserting NewString}
+        Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector);
+
+        (*
+        Case E^.Dat.OperatorSelector Of
+        0:Begin
+           {kol}
+           ws:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1,Ckol);
+           {Delete(s,1+1+CArtikul+1+CKol+1+CIzena+1,CKol);}
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)+StrToInt(ws)):CKol,ws);
+           {Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1);}
+           {summa}
+           ws1:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1,CIZena);
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)*StrToReal(E^.Dat.PrihodElement[i].Input.R_Zena)
+       +StrToReal(ws1)):CIZena:CMantissa,ws1);
+          ws:=ws+'│'+ws1;
+          End;
+        1:Begin
+           {kol}
+           ws:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1,CKol);
+           {Delete(s,1+1+CArtikul+1+CKol+1+CIzena+1+CKol+1,Ckol);}
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)+StrToInt(ws)):CKol,ws);
+           {Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1+CKol+1);}
+           {summa}
+           ws1:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1,CIZena);
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)*StrToReal(E^.Dat.PrihodElement[i].Input.R_Zena)
+     +StrToReal(ws1)):CIZena:CMantissa,ws1);
+          ws:=ws+'│'+ws1;
+          End;
+        2:Begin
+           {kol}
+           ws:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1,CKol);
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)+StrToInt(ws)):CKol,ws);
+           {Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1+CKol+1);}
+           {summa}
+           ws1:=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1,CIZena);
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)*StrToReal(E^.Dat.PrihodElement[i].Input.R_Zena)
+     +StrToReal(ws1)):CIZena:CMantissa,ws1);
+          ws:=ws+'│'+ws1;
+          Delete(s,1+1+CArtikul+1+CKol+1+CIzena+1+CKol+1,Ckol);
+          Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1+CKol+1);
+          End;
+        Else;
+        End;{CAse}
+        *)
+        RashetList^.List^.AtFree(Location(RashetList,E^.Dat.PrihodElement[i].BazKod,ProdagaWindow));
+        RashetList^.SetRange(RashetList^.List^.Count);
+        RashetList^.List^.Insert(NewStr(s));
+        RashetList^.SetRange(RashetList^.List^.Count);
+        ProdagaWindow:=l;
+       End{If TestElement Then}
+      Else
+       Begin{position not found in List}
+        s:='│'+E^.Dat.PrihodElement[i].BazKod+'│    0            0.00 '+Shablon1;
+        Str(StrToInt(E^.Dat.PrihodElement[i].Input.Kol):CKol,ws);
+        Str(StrToInt(E^.Dat.PrihodElement[i].Input.Kol)*StrToReal(E^.Dat.PrihodElement[i].Input.R_Zena)
+           :CIZena:CMantissa,ws1);
+        ws:=ws+'│'+ws1;
+        Delete(s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector,CKol+1+CIZena);
+        {Inserting NewString}
+        Insert(ws,s,1+1+CArtikul+1+CKol+1+CIzena+1+(CKol+1+CIZena+1)*E^.Dat.OperatorSelector);
+        RashetList^.List^.Insert(NewStr(s));
+        RashetList^.SetRange(RashetList^.List^.Count);
+       End;{Else}
+
+     End;{For}
+   End;
+  End;{While}
+ Dispose(E,Done);
+ Close(MArketFile);
+End;
+
+Procedure CalcNewTodayPrihod1(TDate:TDateString;Var NItg:PNewItogType);
+Var MarketFile : PrihodFileType;
+    E : PPrihodType;
+    i : Byte;
+    ws,s : String;
+Begin
+ Assign(MarketFile,Path.ToPrihod+TDate+'.prh');
+ i:=IOResult;
+ Reset(MarketFile);
+ i:=IOResult;
+ If i <> 0 Then
+  Begin
+   Exit;
+  End;
+ New(E,Init);
+ While Not(Eof(MarketFile)) Do
+  Begin
+   ReadPrihod(MarketFile,E);
+   Begin
+    For i:=1 To E^.Dat.Amount Do
+     Begin
+
+      If (E^.Dat.PrihodElement[i].BazKod=NItg^.Dat.BazKod) Then
+       Begin
+        DelSpace(E^.Dat.PrihodElement[i].Input.Kol);
+        DelSpace(E^.Dat.PrihodElement[i].Input.R_Zena);
+        DelSpace(NItg^.Dat.PrhC);
+        DelSpace(NItg^.Dat.PrhS);
+        DelSpace(NItg^.Dat.PrhEC);
+        DelSpace(NItg^.Dat.PrhES);
+        Case E^.Dat.OperatorSelector Of
+        0:Begin
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)+StrToInt(NItg^.Dat.PrhC)):CKol,
+     NItg^.Dat.PrhC);
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)*StrToReal(E^.Dat.PrihodElement[i].Input.R_Zena)
+     +StrToReal(NItg^.Dat.PrhEC)):CIZena:CMantissa,NItg^.Dat.PrhEC);
+          End;
+        1:Begin
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)+StrToInt(NItg^.Dat.PrhS)):CKol,
+     NItg^.Dat.PrhS);
+           Str((StrToInt(E^.Dat.PrihodElement[i].Input.Kol)*StrToReal(E^.Dat.PrihodElement[i].Input.R_Zena)
+     +StrToReal(NItg^.Dat.PrhES)):CIZena:CMantissa,NItg^.Dat.PrhES);
+          End;
+        Else;
+        End;{CAse}
+        DelSpace(NItg^.Dat.PrhC);
+        DelSpace(NItg^.Dat.PrhS);
+        DelSpace(NItg^.Dat.PrhEC);
+        DelSpace(NItg^.Dat.PrhES);
+        {Writeln('Пересчет позиции '+NItg^.Dat.BazKod+' завершен!');}
+       End;{If (E^.Dat.MarketElement[i].BazKod=NItg^.Dat.BazKod) Then}
+     End;{For}
+   End;
+  End;{While}
+ Dispose(E,Done);
+ Close(MArketFile);
+End;
+
+
+Function CreatNewKurzReportFile(TDate:TDateString):Boolean;
+    {Ost    : String[CKol];    (**)
+     OstE   : String[CIZena];  (**)
+     PrhC   : String[CKol];
+     PrhS   : String[CKol];
+     PrhEC   : String[CIZena];
+     PrhES   : String[CIZena];
+     MrkC   : String[CKol];
+     MrkS   : String[CKol];
+     MrkEC  : String[CIZena];
+     MrkES  : String[CIZena]; }
+
+
+Const
+Shablon1=
+'    0            0.00     0            0.00     0            0.00     0            0.00     0 '+
+'           0.00     0            0.00';
+{12345│123456789012345│12345│123456789012345│12345│123456789012345│12345│123456789012345│12345}
+{12345│123456789012345│12345│123456789012345│12345│123456789012345│12345│123456789012345│12345│
+123456789012345│12345│123456789012345}
+{прихК сумма прихода К сумма прихода С продК продС сумма продаж кл сумма продаж Ск}
+Shablon2=
+'    0            0.00';
+{12345│123456789012345│123456789012345│12345│12345│123456789012345│123456789012345│}
+{остат   сумма остатко К сумма прихода С продК продС сумма продаж кл сумма продаж Ск}
+
+VAr Ext : ArtikulStr;
+   RazdelFile : File Of RazdelType;
+   RazdelElement: RazdelType;
+   SkladFile :SkladFileType;
+   Skl:PSkladType;
+   i : Byte;
+   ws,s : String;
+   R : TRect;
+   RashetList : PBox;
+   c : Word;
+
+Begin
+ CreatNewKurzReportFile:=False;
+
+
+ If Not FExists(Path.ToArchiv+TDate+'.p'+Ext) Then
+  Begin
+   If MessageBox(#3'Файл остатков и продаж за '+TDate+' уже существует!'^M+
+   #3'Провести его обновление?',Nil,mfConfirmation+mfOkCancel)<>cmOk Then Exit;
+  End;
+
+ Str(StrToInt(Rek.Kod):2,Ext);
+ RFormatZerro(Ext,2);
+
+
+
+R.Assign(0, 0, 0, 0);
+RashetList := New(PBox, Init(R, 1, Nil));
+RashetList^.NewList(New(PTextCollection, Init(0,1)));
+
+ Assign(NewItogFile,Path.ToArchiv+TDate+'.p'+Ext);
+ i:=IOResult;
+ Rewrite(NewItogFile);
+ i:=IOResult;
+     If i<>0 Then
+      Begin
+       MessageBox(^M+#3+'Ошибка создания '+Path.ToArchiv+TDate+'.p'+Ext,Nil,mfError+mfCancelButton);
+       Exit;
+      End;
+ Assign(RazdelFile,Path.ToRAzdel+'Razdel.db');
+ Reset(RazdelFile);
+ New(Skl,Init);
+ While Not(Eof(RazdelFile)) Do
+  Begin
+   Read(RazdelFile,RazdelElement);
+   If RazdelElement.Employ Then
+    Begin
+     DInfoMsg('Пересчет: Обрабатываю раздел: '+RazdelElement.Kod+'...');
+     Assign(SkladFile,Path.ToSklad+RazdelElement.Kod+'.db');
+     i:=IOResult;
+     Reset(SkladFile);
+     i:=IOResult;
+     If i<>0 Then
+      Begin
+       MessageBox(^M+#3+'Ошибка открытия '+Path.ToSklad+RazdelElement.Kod+'.db',Nil,mfError+mfCancelButton);
+       Close(NewItogFile);
+       Close(RazdelFile);
+       Exit;
+      End;
+    While Not(Eof(SkladFile)) Do
+     Begin
+      ReadSklad(SkladFile,Skl^.Dat);
+      If Skl^.Dat.Employ Then
+       Begin
+        {формируем список остатков}
+        If StrToInt(Skl^.Dat.Input.Kol)>0 Then
+        Begin
+         Str(StrToReal(Skl^.Dat.Input.R_Zena)*STrToInt(Skl^.Dat.Input.Kol):CIZena:CMantissa,ws);
+         Format(Skl^.Dat.Input.Kol,CKol);
+         s:='│'+Skl^.Dat.BazKod+'│'+Skl^.Dat.Input.Kol+'│'+ws+'│'+Shablon1;
+         RashetList^.List^.Insert(NewStr(s));
+         RashetList^.SetRange(RashetList^.List^.Count);
+        End;{конец вставки остатков}
+       End;
+     End;
+    Close(SkladFile);
+    NoInfoMsg;
+    End;
+  End;
+  Dispose(Skl,Done);
+  Close(RazdelFile);
+  {окончили формирование списка остатков}
+
+  {начинаем расчет продаж}
+   CalcNewToDayMarket(TDate,RashetList);
+  {окончили формирование списка продаж}
+
+  {начинаем расчет приходов}
+   CalcNewToDayPrihod(TDate,RashetList);
+
+  {окончили формирование списка приходов}
+
+  {анализируем полученный список и начинаем записывать в файл остатков}
+If (RashetList^.List^.Count-1)>=0 Then
+ Begin
+  New(NItg,Init);
+  For c:=0 To RashetList^.List^.Count-1 Do
+   Begin
+    NItg^.Refresh;
+    s:=RashetList^.GetText(c,RashetList^.List^.Count);
+    {код}
+    NItg^.Dat.BazKod:=Copy(s,1+1,CArtikul);{код}
+    NItg^.Dat.Osn.NaklNumer:=BakGetField(FNaklOsn,NItg^.Dat.BazKod,0);
+    NItg^.Dat.Osn.DateNakl:=BakGetField(FDateOsn,NItg^.Dat.BazKod,0);
+    {остатки}
+    NItg^.Dat.Ost   :=Copy(s,1+1+CArtikul+1,CKol);{кол остатки}
+    DelSpace(Nitg^.Dat.Ost);
+    NItg^.Dat.OstE  :=Copy(s,1+1+CArtikul+1+CKol+1,CIzena);{сумма остатки}
+    DelSpace(Nitg^.Dat.OstE);
+    {приход клиент}
+    NItg^.Dat.PrhC  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1,Ckol);{кол прих клиент}
+    DelSpace(Nitg^.Dat.PrhC);
+    NItg^.Dat.PrhEC  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1,CIZena);{сумма прихE клиент}
+    DelSpace(Nitg^.Dat.PrhEC);
+    {приход склад}
+    NItg^.Dat.PrhS  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1,CKol);{кол прих склад}
+    DelSpace(Nitg^.Dat.PrhS);
+    NItg^.Dat.PrhES  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1,CIZena);{сумма прих склад}
+    DelSpace(Nitg^.Dat.PrhES);
+    {приход бартер}
+    NItg^.Dat.PrhB  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1,CKol);{кол прих бартер}
+    DelSpace(Nitg^.Dat.PrhB);
+    NItg^.Dat.PrhEB  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1,CIZena);{сумма прих бартер}
+    DelSpace(Nitg^.Dat.PrhEB);
+
+    {продажи клиент}
+    NItg^.Dat.MrkC  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1,CKol);
+    DelSpace(Nitg^.Dat.MrkC);
+    NItg^.Dat.MrkEC  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1+CKol+1,CIZena);
+    DelSpace(Nitg^.Dat.MrkEC);
+    {продажи склад}
+    NItg^.Dat.MrkS  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1,
+    CKol);{кол прод склад}
+    DelSpace(Nitg^.Dat.MrkS);
+    NItg^.Dat.MrkES  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1
+    +CKol+1,CIZena);
+    DelSpace(Nitg^.Dat.MrkES);
+    {продажи бартер}
+    NItg^.Dat.MrkB  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1
+    +CKol+1+CIZena+1,CKol);
+    DelSpace(Nitg^.Dat.MrkB);
+    NItg^.Dat.MrkEB  :=Copy(s,1+1+CArtikul+1+CKol+1+CIzena+1+Ckol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1+CKol+1+CIZena+1
+    +CKol+1+CIZena+1+CKol+1,CIZena);
+    DelSpace(Nitg^.Dat.MrkEB);
+    Write(NewItogFile,NItg^.Dat);
+   End;{For}
+  Dispose(NItg,Done);
+ End;{если не Nil}
+
+  Close(NewItogFile);
+  Dispose(RashetList,Done);
+  CreatNewKurzReportFile:=True;
+End;
+
+
+Function CreatKurzReportFile(TDate:TDateString):Boolean;
+VAr Ext : ArtikulStr;
+   RazdelFile : File Of RazdelType;
+   RazdelElement: RazdelType;
+   SkladFile : SkladFileType;
+   Skl : PSkladType;
+   i : Byte;
+Begin
+ CreatKurzReportFile:=False;
+ Str(StrToInt(Rek.Kod):2,Ext);
+ RFormatZerro(Ext,2);
+
+ Assign(NewItogFile,Path.ToArchiv+TDate+'.i'+Ext);
+ i:=IOResult;
+ Rewrite(NewItogFile);
+ i:=IOResult;
+     If i<>0 Then
+      Begin
+       MessageBox(^M+#3+'Ошибка создания '+Path.ToArchiv+TDate+'.i'+Ext,Nil,mfError+mfCancelButton);
+       Exit;
+      End;
+ Assign(RazdelFile,Path.ToRAzdel+'Razdel.db');
+ Reset(RazdelFile);
+ While Not(Eof(RazdelFile)) Do
+  Begin
+   Read(RazdelFile,RazdelElement);
+   If RazdelElement.Employ Then
+    Begin
+     DInfoMsg('Обрабатываю раздел: '+RazdelElement.Kod+'...');
+     Assign(SkladFile,Path.ToSklad+RazdelElement.Kod+'.db');
+     i:=IOResult;
+     Reset(SkladFile);
+     i:=IOResult;
+     If i<>0 Then
+      Begin
+       MessageBox(^M+#3+'Ошибка открытия '+Path.ToSklad+RazdelElement.Kod+'.db',Nil,mfError+mfCancelButton);
+       Close(NewItogFile);
+       Close(RazdelFile);
+       Exit;
+      End;
+    New(Skl,Init);
+    New(NItg,Init);
+    While Not(Eof(SkladFile)) Do
+     Begin
+      ReadSklad(SkladFile,Skl^.Dat);
+      If Skl^.Dat.Employ Then
+       Begin
+        NItg^.Refresh;
+        {расчет остатков штутчных и суммарных}
+        NItg^.Dat.BazKod:=Skl^.Dat.BazKod;
+        DelSpace(Skl^.Dat.Input.Kol);
+        NItg^.Dat.Ost:=Skl^.Dat.Input.Kol;
+        DelSpace(Skl^.Dat.Input.R_Zena);
+        Str(StrToReal(Skl^.Dat.Input.R_Zena)*STrToInt(Skl^.Dat.Input.Kol):CIZena:CMantissa,NItg^.Dat.OstE);
+        DelSpace(NItg^.Dat.OstE);
+        {расчет продаж штучных и сумарных}
+        CalcToDayMarket(TDate,NItg);
+        If (StrToInt(NItg^.Dat.Ost)>0) Or
+           (StrToInt(NItg^.Dat.MrkC)>0)Or
+           (StrToInt(NItg^.Dat.MrkS)>0)Or
+     (StrToInt(NItg^.Dat.MrkB)>0) Then
+        Write(NewItogFile,NItg^.Dat);
+       End;
+     End;
+    Dispose(Skl,Done);
+    Dispose(NItg,Done);
+    Close(SkladFile);
+    NoInfoMsg;
+    End;
+  End;
+  Close(NewItogFile);
+  Close(RazdelFile);
+  CreatKurzReportFile:=True;
+End;
+
+
+
+
+procedure CreatReport(Auto : Boolean;Var s : TMyString);
+Var txt : Text;
+    Regim,c : Word;
+    f : File;
+    Prod,Prod1,s1 : TMyString;
+    Ext : ArtikulStr;
+    R : Word;
+begin
+If (StrToInt(CurrentPassword)<>0) And FindPAram('/NOCLOSE') Then
+ Begin
+  MessageBox(^M+#3'С этой рабочей станции нельзя проводить эту операцию!',Nil,mfError+mfCancelButton);
+  Exit;
+ End;
+
+ Str(StrToInt(Rek.Kod):2,Ext);
+ RFormatZerro(Ext,2);
+
+ {s:=FDate;}
+ If Not(Auto) Then s:=FDate;
+ {If Not(Auto) Then If Not(DateDialog(s)) Then Exit;}
+
+ If s<>FDate Then
+  If Not(Password(3)) Then Exit;
+
+ If Auto Or Not(TestOpenDate1(s)) Then Regim:=1
+ Else Regim:=SelectImport(3);
+
+ If Regim=2 Then Exit;
+
+ c:=IOResult;
+ Assign(txt,Path.TOReport);
+ Rewrite(txt);
+ c:=IOResult;
+ If c<>0 Then
+     Begin
+      MessageBox(#3^M+#3'Не могу создать файл листинга!',Nil,mfError+mfCancelButton);
+      Exit;
+     End;
+
+Prod [0]:=#0;
+Prod1[0]:=#0;
+If Not TestOpenDate1(s) Then
+Begin
+(*
+ if CreatKurzReportFile(s) then
+     Prod:=Path.TOarchiv+S+'.i'+ext
+ Else MessageBox(#3'Создание отчета не было завершено!',Nil,mfError+mfCancelButton);
+}*)
+ c:=IOResult;
+
+ if CreatNewKurzReportFile(s) then
+     Prod1:=Path.TOarchiv+S+'.p'+ext
+ Else MessageBox(#3'Создание отчета не было завершено!',Nil,mfError+mfCancelButton);
+End
+  Else
+  Begin
+   Prod [0]:=#0;
+   Prod1[0]:=#0;
+  End;
+
+{продажи}
+ c:=IOResult;
+ Assign(f,Path.TOMarket+S+'.mrk');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.TOMarket+S+'.mrk');
+    End;
+
+{переоценки}
+ c:=IOResult;
+ Assign(f,Path.ToCorrect+S+'.prz');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToCorrect+S+'.prz');
+    End;
+
+{ревизия}
+ c:=IOResult;
+ Assign(f,Path.ToRewisia+S+'.rwz');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToRewisia+S+'.rwz');
+    End;
+
+{внутр перемещ}
+ c:=IOResult;
+ Assign(f,Path.ToRewisia+S+'.trn');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToRewisia+S+'.trn');
+    End;
+
+{приход}
+ c:=IOResult;
+ Assign(f,Path.ToPrihod+S+'.prh');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToPrihod+S+'.prh');
+    End;
+
+{возврат и хронология возвратов}
+ c:=IOResult;
+ Assign(f,Path.ToReturn+S+'.vzw');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToReturn+S+'.vzw');
+    End;
+
+
+{оплата реализации}
+ c:=IOResult;
+ Assign(f,Path.ToOplata+S+'.opl');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToOplata+S+'.opl');
+    End;
+
+{склад количество}
+     Writeln(txt,Path.ToSklad+'*.db');
+{склад наименования и индексы}
+     Writeln(txt,Path.ToName+'*.id');
+{протокол операций}
+ c:=IOResult;
+ Assign(f,Path.ToProtocol+S+'.pr');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToProtocol+S+'.pr');
+    End;
+
+{протокол возврата}
+ c:=IOResult;
+ Assign(f,Path.ToProtocol+S+'.vpr');
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Close(f);
+     Writeln(txt,Path.ToProtocol+S+'.vpr');
+    End;
+
+
+
+If Regim=1 Then {для полного отчета}
+Begin
+(*
+{хронология возвратов}
+     Writeln(txt,Path.ToReturn+'*.cvz');
+{хронология возвратов}
+     Writeln(txt,Path.ToReturn+'*.svz');
+*)
+{долги}
+     Writeln(txt,Path.ToDolg+'*.dlg');
+(*
+{персональная оплата долгов}
+     Writeln(txt,Path.ToClientOplata+'*.cpl');
+
+{персональная статистика}
+     Writeln(txt,Path.ToClient+'*.his');
+*)
+{база клиентов}
+     Writeln(txt,Path.ToClient+'*.db');
+     Writeln(txt,Path.ToClient+'*.skl');
+     Writeln(txt,Path.ToClient+'*.rsk');
+     Writeln(txt,Path.ToClient+'*.lck');
+
+     Writeln(txt,Path.ToBArter+'*.brt');
+
+     Writeln(txt,Path.ToOplata+'*.bpl');
+
+End;
+
+
+
+(*
+{касса}
+ c:=IOResult;
+ Str(StrToInt(Rek.Kod):2,Ext);
+ RFormatZerro(Ext,2);
+ Assign(f,Path.ToProtocol+FDate+'.k'+Ext);
+ Reset(f);
+ c:=IOResult;
+ If c=0 Then
+    Begin
+     Writeln(txt,Path.ToProtocol+FDate+'.k'+Ext);
+     Close(f);
+    End;
+*)
+
+
+
+
+ Close(txt);
+
+
+If Regim=1 Then
+ AddProtocol('Формирование полного отчета для центрального офиса за '+s,'','')
+Else
+ AddProtocol('Формирование краткого отчета для центрального офиса за '+s,'','');
+  If Regim=1 Then
+  DInfo('Создаю и архивирую полный отчет...')
+  Else
+  DInfo('Создаю и архивирую краткий отчет...');
+
+  DoneSysError;
+  DoneEvents;
+  Application^.HideCursor;
+  DoneDosMem;
+  SWAPVECTORS;
+  s1:=FormKod(Rek.Kod);
+  Delete(s1,1,1);
+  s:='arj a '+Path.ToArchiv+s+'.'+s1+' !'+Path.ToReport+' >Nul';{мой комметрарий}
+  exec (GetEnv('Comspec'),' /c '+s);
+  s:=FDate;
+  s:='arj a '+Path.ToArchiv+s+'.'+s1+' -e '+Prod+' >Nul';{мой комметрарий}
+  exec (GetEnv('Comspec'),' /c '+s);
+  s:=FDate;
+  s:='arj a '+Path.ToArchiv+s+'.'+s1+' -e '+Prod1+' >Nul';{мой комметрарий}
+  exec (GetEnv('Comspec'),' /c '+s);
+  SWAPVECTORS;
+  r := DosError;
+  InitDosMem;
+  InitEvents;
+  InitSysError;
+  NoInfo;
+  CursorLines:=1543;
+  Application^.Redraw;
+   Case R Of
+    0:MessageBox(#3^M+#3'Создание отчета успешно завершено!',Nil,mfInformation+mfCancelButton);
+{
+    2:MessageBox(#3^M+#3'Файл не найден !',Nil,mfError+mfCancelButton);
+    3:MessageBox(#3^M+#3'Путь не найден !',Nil,mfError+mfCancelButton);
+    5:MessageBox(#3^M+#3'Доступ невозможен !',Nil,mfError+mfCancelButton);
+    6:MessageBox(#3^M+#3'Неверное устройство !',Nil,mfError+mfCancelButton);
+    8:MessageBox(#3^M+#3'Недостаточно памяти !',Nil,mfError+mfCancelButton);
+   10:MessageBox(#3^M+#3'Неверные настройки !',Nil,mfError+mfCancelButton);
+   11:MessageBox(#3^M+#3'Неверный формат !',Nil,mfError+mfCancelButton);
+   18:MessageBox(#3^M+#3'Слишком много файлов !',Nil,mfError+mfCancelButton);
+}
+   Else;
+   End;
+   CursorLines:=1543;
+end;
+
+
+
+
+function LeadingZero(w : Word) : String;
+var
+  s : String;
+begin
+  Str(w:0,s);
+  if Length(s) = 1 then
+    s := '0' + s;
+  LeadingZero := s;
+end;
+
+
+Function Times:TDateString;
+Var h,m,s,hund : Word;
+Begin
+GetTime(h,m,s,hund);
+Times:=LeadingZero(h)+':'+LeadingZero(m)+':'+LeadingZero(s);
+End;
+
+
+Function TestElement (Const S : AllStr;Const P : PBox) : Boolean;
+Var ls : Word;
+    k  : Byte;
+    st : String[CALL];
+Begin
+TestElement:=True;
+For ls :=0 To P^.List^.Count Do
+Begin
+St:=P^.GetText(ls,P^.List^.Count);
+k:=Pos('│',St);
+ST:=Copy(St,K+1,CArtikul);
+If St=S Then
+   Begin
+    TestElement:=False;
+    Break;
+   End;
+End;
+End;
+
+
+Function TestProdaga (Const SArt,SOtd : AllStr;Const P : PBox) : Boolean;
+Var ls : Word;
+    St,So : ArtikulStr;
+Begin
+TestProdaga:=True;
+For ls :=0 To P^.List^.Count Do
+Begin
+St:=Copy(P^.GetText(ls,P^.List^.Count),1{+CName+1},CArtikul);
+So:=Copy(P^.GetText(ls,P^.List^.Count),1+CName+1+CArtikul+1,COne);
+If (St=SArt)And(So=SOtd) Then
+   Begin
+    TestProdaga:=False;
+    Break;
+   End;
+End;
+End;
+
+Function TestElementDivision (Const SArt,SOtd : AllStr;Const P : PBox) : Boolean;
+Var k,ls : Word;
+    St,So : TEnjoyStr;
+Begin
+TestElementDivision:=True;
+For ls :=0 To P^.List^.Count Do
+Begin
+St:=P^.GetText(ls,P^.List^.Count);
+k:=Pos('│',St);
+ST:=Copy(St,K+1,CArtikul);
+So:=Copy(P^.GetText(ls,P^.List^.Count),k+1+CArtikul+1,COne);
+If (St=SArt)And(So=SOtd) Then
+   Begin
+    TestElementDivision:=False;
+    Break;
+   End;
+End;
+End;
+
+
+{
+Function TestElement (Const S : AllStr;Const P : PBox) : Boolean;
+Var ls : Word;
+    k  : Byte;
+    s1,st : String[CArtikul];
+Begin
+TestElement:=True;
+s1:=s;
+For ls :=0 To P^.List^.Limit Do
+Begin
+k:=Pos('│')
+ST:=Copy(P^.GetText(ls,P^.List^.Limit),1+CName+1,CArtikul);
+If St=S1 Then
+   Begin
+    TestElement:=False;
+    Break;
+   End;
+End;
+End;
+}
+
+
+Function Password(Const Pas:Byte) : Boolean;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  s : String[10];
+  k,c:Word;
+  l : Real;
+  f : Text;
+  Obras : String[10];
+begin
+ClearFind;
+Password:=False;
+If CurrentPassword<>'00' Then
+Begin
+R.Assign(29, 9, 51, 14);
+New(Dlg, Init(R, 'Код доступа'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+R.Assign(5, 2, 17, 3);
+
+Control := New(PSInputLine, Init(R, 10));
+Control^.Options := Control^.Options or ofCenterX or ofCenterY;
+Dlg^.Insert(Control);
+
+Str(Pas:2,S);
+R.Assign(3, 1, 22, 2);
+Control := New(PColoredText, Init(R, #3'Уровень доступа:'+s, $74));
+Dlg^.Insert(Control);
+
+
+Dlg^.SelectNext(False);
+S[0]:=#0;
+Dlg^.SetData(S);
+
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+ Begin
+  Assign(f,Path.ToSklad+'p.pwl');
+  c:=IOResult;
+  Reset(f);
+  c:=IOResult;
+  If c=0 Then
+   Begin
+    c:=0;
+    While Not(Eof(f)) And (c<>Pas) Do
+    Begin
+    Inc(c);
+    Readln(f,Obras);
+    End;
+    c:=IOResult;
+    Close(f);
+   End
+   Else
+    Begin
+    MessageBox(#3^M+#3'Пароль в ситеме не установлен!'^M+
+    #3'Обратитесь к разработчику!',nil,mfWarning+mfCancelButton);
+    Dispose(Control,Done);
+    Dispose(Dlg,Done);
+    Exit;
+    End;
+  Dlg^.GetData(s);
+  UpStr(S);
+  {UpStr(Obras);}
+  Obras:=Decode (Obras);
+
+{ If (Ord(S[8])<>0) Then
+  If ((Ord(S[1]))-(Ord(S[2]))+(Ord(S[3]))-(Ord(S[4]))+
+  -(Ord(S[5]))-(Ord(S[6]))+(Ord(S[7]))) Div (Ord(S[8]))=-3 }
+  If s=Obras Then Password:=True;
+{ Else
+    MessageBox(#3^M+#3'Еще одна такая попытка и заблокирую на фик всю базу!',nil,mfWarning+mfCancelButton);}
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+ End
+ Else
+ Begin
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+ End;
+End
+Else Password:=True;
+end;
+
+
+
+
+
+
+
+Procedure AddProtocol(s,s1,s2:String);
+Var f : Text;
+    i : Byte;
+    s3 : String;
+Begin
+  i:=IOResult;
+  Assign(f,Path.ToProtocol+FDate+'.pr');
+  If LockPrWriteRead(FDate) Then
+  Begin
+  DInfoMsg('Обновляю протокол...');
+  i:=IOResult;
+  Append(f);
+  i:=IOResult;
+  If I<>0 Then
+  Begin
+    NoInfoMsg;
+    MessageBox(^M+#3'Ошибка записи протокола!'+ClicProgrammer,Nil,
+    mfError+mfCancelButton);
+  End;
+  i:=IOResult;
+  s3:=FDate+'('+Times+') Оператор: ('+CurrentPassword+') '+GetOperatorName(CurrentPassword)+
+  ' Компьютер: ('+GetMachineName+')';
+  s3:=Code(s3);
+  Writeln(f,s3);
+{
+  Writeln(f,FDate+'('+Times+') Оператор: ('+CurrentPassword+') '+GetOperatorName(CurrentPassword)+
+  ' Компьютер: ('+GetMachineName+')');
+}
+  s:=Code(s);
+  Writeln(f,s);
+
+  If s1[0]<>#0 Then
+  Begin
+   s1:=Code(s1);
+   Writeln(f,s1);
+  End;
+
+  If s2[0]<>#0 Then
+  Begin
+   s2:=Code(s2);
+   Writeln(f,s2);
+  End;
+
+  Writeln(f,'-------------------------------------------------------');
+  Close(f);
+  NoInfoMsg;
+  Repeat
+  Until UnLockPrWriteRead(FDate);
+
+  End;
+  i:=IOResult;
+End;
+
+
+(*
+
+Procedure AddProtocol(s:String);
+Var f : Text;
+    i : Byte;
+Begin
+  i:=IOResult;
+  Assign(f,Path.ToProtocol+FDate+'.pr');
+  Append(F);
+  i:=IOResult;
+  If I<>0 Then
+  Begin
+     i:=IOResult;
+     Rewrite(F);
+     i:=IOResult;
+     If i<>0 Then Exit;
+     Writeln(f,'   ПРОТОКОЛ ОПЕРАЦИЙ НА складе: '+Rek.Kod+' за '+FDate);
+     Writeln(f);
+  End;
+  Writeln(f,FDate+'('+Times+') Оператор: ('+CurrentPassword+') '+GetOperatorName(CurrentPassword)+
+  ' Компьютер: ('+GetMachineName+')');
+  Writeln(f,s);
+  Writeln(f,'-------------------------------------------------------');
+  Close(f);
+  i:=IOResult;
+End;
+
+
+
+*)
+(*
+Procedure AddProtocolVozwrat(s:String);
+Var f : Text;
+    i : Byte;
+Begin
+  i:=IOResult;
+  Assign(f,Path.ToProtocol+FDate+'.vpr');
+  Append(F);
+  i:=IOResult;
+  If I<>0 Then
+  Begin
+{  MessageBox(#3^M+#3'Файл протокола не найден!'^M+
+   #3'Создаю файл протокола!',Nil,mfError+mfOkButton);}
+     i:=IOResult;
+     Rewrite(F);
+     i:=IOResult;
+     If i<>0 Then Exit;
+     Writeln(f,'   ПРОТОКОЛ ОПЕРАЦИЙ ВОЗВРАТА НА складе: '+Rek.Kod+' за '+FDate);
+     Writeln(f);
+  End;
+  Writeln(f,FDate+'('+Times+') Оператор: ('+CurrentPassword+') '+GetOperatorName(CurrentPassword));
+  Writeln(f,s);
+  Writeln(f,'-------------------------------------------------------');
+  Close(f);
+End;
+*)
+
+
+Procedure AddProtocolVozwrat(s:String);
+Var f : Text;
+    i : Byte;
+    s1 : String;
+Begin
+ i:=IOResult;
+ Assign(f,Path.ToProtocol+FDate+'.vpr');
+ If LockReturnWriteRead(FDate) Then
+  Begin
+   DInfoMsg('Обновляю протокол возврата...');
+   i:=IOResult;
+   Append(f);
+   i:=IOResult;
+   If I<>0 Then
+    Begin
+     NoInfoMsg;
+     MessageBox(^M+#3'Ошибка записи протокола возврата!'+ClicProgrammer,Nil,
+     mfError+mfCancelButton);
+    End;
+   i:=IOResult;
+
+  s1:=FDate+'('+Times+') Оператор: ('+CurrentPassword+') '+GetOperatorName(CurrentPassword)+
+  ' Компьютер: ('+GetMachineName+')';
+  s1:=Code(s1);
+  Writeln(f,s1);
+  s:=Code(s);
+  Writeln(f,s);
+  Writeln(f,'-------------------------------------------------------');
+  Close(f);
+
+   NoInfoMsg;
+   Repeat
+   Until UnLockReturnWriteRead(FDate);
+  End;
+i:=IOResult;
+End;
+
+
+Function DateDialog(Var s:TDAteString):Boolean;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+DateDialog := False;
+R.Assign(33, 9, 47, 14);
+New(Dlg, Init(R, 'Дата'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.Palette := dpCyanDialog;
+Dlg^.HelpCtx:=$E002;
+
+R.Assign(2, 2, 12, 3);
+Control := New(PInputLine, Init(R, 8));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PPXPictureValidator, Init(DateFiltr, True));
+
+Dlg^.SelectNext(False);
+Dlg^.SetData(FDate);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+ Begin
+  DateDialog:=True;
+  Dlg^.GetData(S);
+ End;
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+end;
+
+
+Function DatePeriodDialog(Var s1,s2:TDAteString;Regim:Boolean):Boolean;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control1,Control2 : PView;
+  c : Word;
+  l : LongInt;
+  s : TDateString;
+begin
+DatePeriodDialog := False;
+R.Assign(25, 9, 55, 14);
+New(Dlg, Init(R, 'Укажите период'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+Dlg^.Palette := dpCyanDialog;
+
+R.Assign(4, 2, 14, 3);
+Control1 := New(PInputLine, Init(R, 8));
+Dlg^.Insert(Control1);
+  PInputLine(Control1)^.Validator := New(PPXPictureValidator, Init(DateFiltr, True));
+
+  R.Assign(1, 2, 4, 3);
+  Dlg^.Insert(New(PLabel, Init(R, '~с~:', Control1)));
+
+Control1^.SetData(FDate);
+
+R.Assign(18, 2, 28, 3);
+Control2 := New(PInputLine, Init(R, 8));
+Dlg^.Insert(Control2);
+  PInputLine(Control2)^.Validator := New(PPXPictureValidator, Init(DateFiltr, True));
+
+  R.Assign(14, 2, 18, 3);
+  Dlg^.Insert(New(PLabel, Init(R, '~п~о:', Control2)));
+Control2^.SetData(FDate);
+
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+If c<>cmCancel Then
+ Begin
+  Control1^.GetData(S1);
+  Control2^.GetData(S2);
+  DelSpace(s1);
+  DelSpace(s2);
+
+   If Not(TestDate(s1,L)) Then
+    Begin
+     MessageBox(^M+#3'Ошибка при вводе начала периода!',Nil,mfError+mfCancelButton);
+     DatePeriodDialog:=FAlse;
+     Dispose(Control1,Done);
+     Dispose(Control2,Done);
+     Dispose(Dlg,Done);
+     Exit;
+    End;
+
+   If Not(TestDate(s2,L)) Then
+    Begin
+     MessageBox(^M+#3'Ошибка при вводе окончания периода!',Nil,mfError+mfCancelButton);
+     DatePeriodDialog:=FAlse;
+     Dispose(Control1,Done);
+     Dispose(Control2,Done);
+     Dispose(Dlg,Done);
+     Exit;
+    End;
+
+
+   {если даты перепутаны переставляем их}
+   If DateStringToDate(DateMask,s1)>DateStringToDate(DateMask,s2) Then
+    Begin
+        s2:=s;
+        s2:=s1;
+        s1:=s;
+    End;
+
+   {если диапазон превышает 30 дней}
+   If Regim Then
+   If (DateStringToDate(DateMask,s2)-DateStringToDate(DateMask,s1))>30 Then
+    Begin
+        MessageBox(^M+#3'Указан слишком большой диапазон!'^M+
+           #3+'Сокращаю его до 30 дней!',Nil,mfError+mfCancelButton);
+        s1:=DAteToDAteString(DAteMask,
+           DateStringToDate(DateMask,s2)-30);
+    End;
+
+     DatePeriodDialog:=True;
+
+     Dispose(Control1,Done);
+     Dispose(Control2,Done);
+     Dispose(Dlg,Done);
+ End
+Else
+ Begin
+  Dispose(Control1,Done);
+  Dispose(Control2,Done);
+  Dispose(Dlg,Done);
+ End;
+end;
+
+
+
+
+Function FullScreen(Const P:PBox;Const s,s1:String;SDoc:ArtikulStr;SDate:TDateString;
+                          t:Byte):Boolean;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control,ControlG : PView;
+  ControlFull : PBoxNew;
+  St : TMyString;
+  i : Word;
+begin
+ClearFind;
+FullScreen:=False;
+R.Assign(0, 0, 80, 23);
+New(Dlg, Init(R, 'Просмотр документа'));
+
+
+R.Assign(79, 2, 80, 22);
+Control := New(PScrollBar, Init(R));
+Dlg^.Insert(Control);
+
+R.Assign(75, 22, 78, 23);
+ControlG := New(PScrollBar, Init(R));
+ControlG^.Options := ControlG^.Options or ofPostProcess;
+Dlg^.Insert(ControlG);
+
+R.Assign(1, 2, 79, 22);
+ControlFull := New(PBoxNew, Init(R, 1,PScrollBar(ControlG),PScrollbar(Control)));
+ControlFull^.NewList(New(PTextCollection, Init(1,1)));
+If (P^.List^.Count-1)>=0 Then
+For i:=0 To P^.List^.Count-1 Do
+ Begin
+  st:=P^.GetText(i,P^.List^.Count);
+  ControlFull^.List^.Insert(NewStr(St));
+  ControlFull^.SetRange(ControlFull^.List^.Count);
+ End;
+If t=0 Then
+ControlFull^.HelpCtx:=$E091
+Else
+ControlFull^.HelpCtx:=$E246;
+ControlFull^.FocusItem(0);
+
+Dlg^.Insert(ControlFull);
+
+  R.Assign(1, 1, 79, 2);
+  Dlg^.Insert(New(PLabel, Init(R, S, ControlFull)));
+
+
+Str(P^.List^.Count:CMantissa,st);
+R.Assign(53, 0, 71, 1);
+Control := New(PColoredText, Init(R, 'Всего позиций:'+st, $4E));
+Dlg^.Insert(Control);
+
+DelZerro(Sdoc);
+R.Assign(2, 0, 28, 1);
+Control := New(PColoredText, Init(R, 'Документ:'+SDoc+' от '+SDate, $4E));
+Dlg^.Insert(Control);
+
+
+
+If S1[0]<>#0 Then
+Begin
+R.Assign(13, 22, 14+Ord(s1[0]), 23);
+Control := New(PColoredText, Init(R, #3+S1, $4E));
+Control^.Options := Control^.Options or ofCenterX;
+Dlg^.Insert(Control);
+End;
+
+
+Dlg^.SelectNext(False);
+i := Desktop^.ExecView(Dlg);
+ClearFind;
+If i=cmOk Then FullScreen:=True;
+Dispose(Control,Done);
+Dispose(ControlG,Done);
+Dispose(Dlg,Done);
+end;
+
+
+Function Code(s:TMyString):TMyString;
+Var i : Byte;
+Begin
+ For i := 1 To Ord(S[0]) Do
+  Begin
+   If Odd(i) Then s[i]:=Chr(Ord(S[i])+1)
+   Else s[i]:=Chr(Ord(S[i])-1);
+   {s[i]:=Chr(Ord(S[i])+i);}
+  End;
+  Code:=s;
+End;
+
+Function DeCode(s:TMyString):TMyString;
+Var i : Byte;
+Begin
+ For i := 1 To Ord(S[0]) Do
+  Begin
+   If Odd(i) Then s[i]:=Chr(Ord(S[i])-1)
+   Else s[i]:=Chr(Ord(S[i])+1);
+{   s[i]:=Chr(Ord(S[i])-i);}
+  End;
+  DeCode:=s;
+End;
+
+
+Procedure ChekPost(st:AllStr);
+VAr f : Text;
+    s : String[CPost];
+    Test : Boolean;
+    Wspom : PBox;
+    R:TRect;
+    i : Word;
+    Temp:PBox;
+Begin
+DelSpaceRight(St);
+If st[0]<>#0 Then
+Begin
+i:=IOResult;
+Assign(f,Path.ToClient+'Post.db');
+Reset(f);
+i:=IOResult;
+If i<>0 Then Exit;
+Test:=False;
+While Not(Eof(f)) Do
+ Begin
+  Readln(f,s);
+  If Pos(st,s)=1 Then
+   Begin
+    Test:=True;
+    Break;
+   End;
+ End;
+Close(f);
+If Not(Test) Then
+ Begin
+ Reset(f);
+ R.Assign(0, 0, 0, 0);
+ Temp := New(PBox, Init(R, 1, Nil));
+ Temp^.NewList(New(PTextCollection, Init(1,1)));
+ While Not(Eof(F)) Do
+  Begin
+   Readln(f,s);
+   Temp^.List^.Insert(NewStr(s));
+   Temp^.SetRange(Temp^.List^.Count);
+  End;
+   Temp^.List^.Insert(NewStr(st));
+   Temp^.SetRange(Temp^.List^.Count);
+ Close(f);
+ Rewrite(f);
+ i:=IOResult;
+ If i=0 Then
+ Begin
+ For i:=Temp^.List^.Count-1 DownTo 0 Do
+  Begin
+   s:=Temp^.GetText(i,Temp^.List^.Count);
+   Writeln(f,s);
+  End;
+ Close(f);
+ End;
+ i:=IOResult;
+ Dispose(Temp,Done);
+ End;
+End;
+End;
+
+
+Procedure NewIDX;
+VAr sklFile : File Of SkladType;
+    skl : pSkladType;
+    s : ArtikulStr;
+    RazdelFile : File Of RazdelType;
+    RazdelElement : RazdelType;
+    F : Boolean;
+    Count,c : Word;
+Begin
+c:=IOResult;
+Assign(RazdelFile,Path.ToRazdel+'Razdel.db');
+Reset(RazdelFile);
+c:=IOResult;
+If c<>0 Then
+ Begin
+  MessageBox(^M+#3'Ошибка доступа к файлу разделов!',Nil,mfError+mfCancelButton);
+  Exit;
+ End;
+While Not(Eof(RazdelFile)) Do
+ Begin
+  Read(RazdelFile,RazdelElement);
+  If RazdelElement.Employ Then
+  Begin
+   DInfo('Идет переиндексация базы данных - раздел '+RazdelElement.Kod+'...');
+   Assign(SklFile,Path.ToSklad+RazdelElement.Kod+'.db');
+   c:=IOResult;
+   Reset(SklFile);
+   c:=IOResult;
+If c<>0 Then
+ Begin
+  Close(RazdelFile);
+  NoInfo;
+  MessageBox(^M+#3'Ошибка доступа к файлу '+Path.ToSklad+RazdelElement.Kod+'.db',Nil,mfError+mfCancelButton);
+  Exit;
+ End;
+
+   New(Skl,Init);
+   Count:=0;
+   While Not(Eof(sklFile)) Do
+    Begin
+
+     Repeat
+      Pause(1);
+     Until NetCAll.Lock(SklFile,FilePos(SklFile)*SizeOf(SkladType),SizeOf(SkladType));
+
+     Read(SklFile,Skl^.Dat);
+
+     Str(Count:3,S);
+     RFormatZerro(s,3);
+     Skl^.Dat.BAZKod:=RazdelElement.Kod+s;
+     Seek(SklFile,Filepos(SklFile)-1);
+     Write(SklFile,Skl^.Dat);
+
+   Repeat
+    NetCall.UnLock(SklFile,(FilePos(SklFile)-1)*SizeOf(SkladType),SizeOf(SkladType));
+   Until (DosError=0);
+
+     Inc(Count);
+    End;
+
+   Seek(SklFile,0);
+
+   While Not(Eof(sklFile)) Do
+    Begin
+
+     Repeat
+      Pause(1);
+     Until NetCAll.Lock(SklFile,FilePos(SklFile)*SizeOf(SkladType),SizeOf(SkladType));
+
+     Read(SklFile,Skl^.Dat);
+     c:=IOResult;
+     F:=GetIDEmploy(Skl^.DAt.BazKod);
+     If F<>Skl^.DAt.Employ Then
+      Begin
+       Seek(SklFile,Filepos(SklFile)-1);
+       Skl^.DAt.Employ:=F;
+       Write(SklFile,Skl^.Dat);
+      End;
+
+     Repeat
+      NetCall.UnLock(SklFile,(FilePos(SklFile)-1)*SizeOf(SkladType),SizeOf(SkladType));
+     Until (DosError=0);
+
+    End;
+
+   Dispose(Skl,Done);
+   Close(SklFile);
+   NoInfo;
+   End;
+ End;
+Close(RazdelFile);
+MessageBox(^M+#3'Переиндексация успешно завершена!',Nil,mfInformation+mfCancelButton);
+End;
+
+
+
+Procedure ClientIDX;
+Var c : LongInt;
+    ws : String;
+    ClientFile : File Of ClientType;
+    ClientElement :ClientType;
+Begin
+Assign (ClientFile,Path.ToClient+'Client.db');
+c:=IOResult;
+Reset (ClientFile);
+c:=IOResult;
+AInfo('Идет восстановление индексов базы клиентов...');
+c:=0;
+While Not(Eof(ClientFile)) Do
+ Begin
+
+     Repeat
+      Pause(1);
+     Until NetCall.Lock(ClientFile,FilePos(ClientFile)*SizeOf(ClientType),SizeOf(ClientType));
+
+     Read(ClientFile,ClientElement);
+
+  Str(c:4,ws);
+  While Pos(' ',ws)>0 Do Ws[Pos(' ',ws)]:='0';
+  Seek(ClientFile,FilePos(ClientFile)-1);
+  ClientElement.Kod:=ws;
+  Write(ClientFile,ClientElement);
+
+     Repeat
+      NetCall.UnLock(ClientFile,(FilePos(ClientFile)-1)*SizeOf(ClientType),SizeOf(ClientType));
+     Until (DosError=0);
+
+
+  Inc(c);
+ End;
+System.Close(ClientFile);
+NoInfo;
+End;
+
+
+
+Procedure CreatIDX;
+VAr sklFile : File Of SkladType;
+    skl : pSkladType;
+    RazdelFile : File Of RazdelType;
+    RazdelElement : RazdelType;
+    F : Boolean;
+    c : Word;
+    ch : LongInt;
+    ws : String;
+    k,All : LongInt;
+
+Begin
+c:=IOResult;
+Assign(RazdelFile,Path.ToRazdel+'Razdel.db');
+Reset(RazdelFile);
+c:=IOResult;
+If c<>0 Then
+ Begin
+  MessageBox(^M+#3'Ошибка доступа к файлу разделов!',Nil,mfError+mfCancelButton);
+  Exit;
+ End;
+While Not(Eof(RazdelFile)) Do
+ Begin
+  Read(RazdelFile,RazdelElement);
+  If RazdelElement.Employ Then
+  Begin
+   DInfo('Идет восстановление индексов раздела '+RazdelElement.Kod+'...');
+   Assign(SklFile,Path.ToSklad+RazdelElement.Kod+'.db');
+   c:=IOResult;
+   Reset(SklFile);
+   c:=IOResult;
+If c<>0 Then
+ Begin
+  Close(RazdelFile);
+  NoInfo;
+  MessageBox(^M+#3'Ошибка доступа к файлу '+Path.ToSklad+RazdelElement.Kod+'.db',Nil,mfError+mfCancelButton);
+  Exit;
+ End;
+   New(Skl,Init);
+   ch:=0;
+   While Not(Eof(sklFile)) Do
+    Begin
+
+     Repeat
+      Pause(1);
+     Until NetCAll.Lock(SklFile,FilePos(SklFile)*SizeOf(SkladType),SizeOf(SkladType));
+
+     Read(SklFile,Skl^.Dat);
+     Str(ch:3,ws);
+     While Pos(' ',ws)>0 Do Ws[Pos(' ',ws)]:='0';
+
+     With Skl^.Dat.Input Do
+     Begin
+      All:=0;
+      For k:=1 To CDivision Do
+        Begin
+           Str(StrToInt(DivisionS[k]):CKol,DivisionS[k]);
+           DelSpace(DivisionS[k]);
+           All:=All+StrToInt(DivisionS[k]);
+        End;
+
+     Str(All:CKol,Skl^.Dat.Input.Kol);
+     DelSpace(Skl^.Dat.Input.Kol);
+
+     Str(StrToReal(Skl^.Dat.Input.R_Zena):CZena:CMantissa,Skl^.Dat.Input.R_Zena);
+     DelSpace(Skl^.Dat.Input.R_Zena);
+
+     Str(StrToReal(Skl^.Dat.Input.O_Zena):CZena:CMantissa,Skl^.Dat.Input.O_Zena);
+     DelSpace(Skl^.Dat.Input.O_Zena);
+
+     Skl^.Dat.Date:=FDate;
+     Skl^.Dat.Time:=Times;
+     Str(StrToReal(Skl^.Dat.Input.Zakupka):CZena:CMantissa,Skl^.Dat.Input.Zakupka);
+     DelSpace(Skl^.Dat.Input.Zakupka);
+     Skl^.Dat.Input.Caption:=CurrentPAssword;
+     End;
+
+
+     ws:=RazdelElement.Kod+ws;
+     Seek(SklFile,FilePos(SklFile)-1);
+     Skl^.Dat.BazKod:=ws;
+     Write(SklFile,Skl^.Dat);
+
+     Repeat
+      NetCall.UnLock(SklFile,(FilePos(SklFile)-1)*SizeOf(SkladType),SizeOf(SkladType));
+     Until (DosError=0);
+
+     Inc(ch);
+     End;
+
+   Dispose(Skl,Done);
+   Close(SklFile);
+   NoInfo;
+   End;
+ End;
+Close(RazdelFile);
+MessageBox(^M+#3'Переиндексация успешно завершена!',Nil,mfInformation+mfCancelButton);
+End;
+
+
+
+Function Menedger(Var K:TDateString):Word;
+Label Start;
+var
+  Dlg : PDialog;
+  R : TRect;
+  ControlSel,ControlK : PView;
+  c : Word;
+
+begin
+Start:
+k[0]:=#0;
+Menedger:=2;
+c:=0;
+R.Assign(29, 8, 51, 14);
+New(Dlg, Init(R, '+/-'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E002;
+
+R.Assign(5, 1, 18, 3);
+ControlSel := New(PRadioButtons, Init(R,
+  NewSItem('~С~кидка',
+  NewSItem('~Н~аценка',
+  Nil))));
+Dlg^.Insert(ControlSel);
+ControlSel^.SetData(c);
+
+R.Assign(14, 4, 20, 5);
+ControlK := New(PInputLine, Init(R, 5));
+Dlg^.Insert(ControlK);
+  PInputLine(ControlK)^.Validator := New(PFilterValidator, Init(['1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 4, 14, 5);
+  Dlg^.Insert(New(PLabel, Init(R, 'Коэ~ф~фициент:', ControlK)));
+
+k:='1';
+ControlK^.SetData(k);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+ Begin
+  ControlSel^.GetData(c);
+  ControlK^.GetData(k);
+  Dispose(ControlSel,Done);
+  Dispose(ControlK,Done);
+  Dispose(DLG,Done);
+  If (c=0) And (Not(StrToreal(K)>=1.00) Or Not(StrToReal(K)<=1.99)) Then
+   Begin
+    MessageBox(^M+#3+'Недопустимое значение скидки!'^M+
+    #3'Значение должно быть от 1.00 до 1.99!',Nil,mfError+mfCancelButton);
+    Goto Start;
+   End;
+  If (c=1) And (Not(StrToreal(K)>=0.00) Or Not(StrToReal(K)<=99.99)) Then
+   Begin
+    MessageBox(^M+#3+'Недопустимое значение наценки!'^M+
+    #3'Значение должно быть от 0 до 99.99!',Nil,mfError+mfCancelButton);
+    Goto Start;
+   End;
+  Menedger:=c;
+ End
+ Else
+ Begin
+  Menedger:=2;
+  k:='0.00';
+  Dispose(ControlSel,Done);
+  Dispose(ControlK,Done);
+  Dispose(DLG,Done);
+ End;
+end;
+
+
+Function Kurs(Var K:TDateString):Word;
+Label 1;
+var
+  Dlg : PDialog;
+  R : TRect;
+  ControlWal,ControlKurs : PView;
+  Wal,c : Word;
+
+begin
+Kurs:=2;
+k[0]:=#0;
+wal:=0;
+
+1:
+R.Assign(28, 9, 52, 14);
+New(Dlg, Init(R, ''));
+Dlg^.HelpCtx:=$E002;
+
+R.Assign(1, 2, 12, 4);
+ControlWal := New(PRadioButtons, Init(R,
+  NewSItem('~Р~убли',
+  NewSItem('USD', Nil))));
+Dlg^.Insert(ControlWal);
+
+ControlWal^.SetData(Wal);
+
+
+  R.Assign(1, 1, 9, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Валюта:', ControlWal)));
+
+R.Assign(13, 3, 23, 4);
+ControlKurs := New(PInputLine, Init(R, CZena));
+Dlg^.Insert(ControlKurs);
+  PInputLine(ControlKurs)^.Validator := New(PFilterValidator, Init(['1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(12, 2, 22, 3);
+  Dlg^.Insert(New(PLabel, Init(R, '~К~урс USD:', ControlKurs)));
+
+ControlKurs^.SetData(k);
+
+Dlg^.SelectNext(False);
+c:=DeskTop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+  ControlWal^.GetData(Wal);
+  ControlKurs^.GetData(K);
+  Dispose(ControlWal,Done);
+  Dispose(ControlKurs,Done);
+  Dispose(Dlg,Done);
+
+  If Wal=1 Then
+   Begin
+    If (StrToReal(k)<0.01) Then
+     Begin
+      MessageBox(^m+#3'Ошибка при вводе курса USD!',Nil,mfError+mfCancelButton);
+      Goto 1;
+     End;
+     Kurs:=1;
+   End
+   Else Kurs:=0;
+
+  End
+  Else
+  Begin
+  Dispose(ControlWal,Done);
+  Dispose(ControlKurs,Done);
+  Dispose(Dlg,Done);
+  End;
+end;
+
+
+Function SelectVidNalich:Byte;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+
+begin
+R.Assign(21, 9, 58, 13);
+New(Dlg, Init(R, 'Дополнительно'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+{Dlg^.Palette := dpCyanDialog;}
+Dlg^.HelpCtx:=$E241;
+
+R.Assign(1, 1, 36, 3);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Продажа+Колич,шт+Колич,уп',
+  NewSItem('Продажа+Закупка+Колич,шт', Nil))));
+Dlg^.Insert(Control);
+c:=1;
+
+Dlg^.SetData(c);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+   Dlg^.GetData(c);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectVidNalich:=c;
+  End
+  Else
+  Begin
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectVidNalich:=3;
+  End;
+end;
+
+
+
+Function SelectPrz:Byte;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+SelectPrz:=0;
+
+R.Assign(31, 9, 61, 14);
+
+New(Dlg, Init(R, 'Точнее'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+
+R.Assign(1, 1, 29, 4);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~П~ереоценки',
+  NewSItem('Перео~ц~енки по возврату',
+{  NewSItem('Переоценки по ~р~евизии',}
+  NewSItem('~В~се переоценки', Nil)))));
+
+Dlg^.Insert(Control);
+
+c:=2;
+
+Dlg^.SetData(c);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+   Dlg^.GetData(c);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectPrz:=c;
+  End
+  Else
+  Begin
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectPrz:=3;
+  End;
+end;
+
+Function SelectIDTip:Byte;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+SelectIdTip:=0;
+
+R.Assign(31, 9, 61, 14);
+
+R.Assign(25, 9, 54, 14);
+New(Dlg, Init(R, 'Отбор'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+
+R.Assign(1, 1, 28, 4);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~З~апрещенные к продаже',
+  NewSItem('~Р~азрешенные к продаже',
+  NewSItem('~В~се', Nil)))));
+Dlg^.Insert(Control);
+
+c:=2;
+
+Dlg^.SetData(c);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+   Dlg^.GetData(c);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectIDTip:=c;
+  End
+  Else
+  Begin
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectIDTip:=3;
+  End;
+end;
+
+
+Function SelectSpecify(Regim :Boolean;Reg:Byte):Byte;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+SelectSpecify:=0;
+Case Reg Of
+0:R.Assign(31, 9, 48, 14);
+1:R.Assign(29, 9, 51, 14);
+2:R.Assign(28, 9, 51, 14);
+11:R.Assign(28, 9, 51, 15);
+3:R.Assign(29, 9, 51, 14);
+4:R.Assign(31, 9, 48, 14);
+5:R.Assign(29, 9, 51, 14);
+12,15:R.Assign(29, 9, 55, 14);
+6,7:R.Assign(31, 9, 52, 14);
+8:If Not Regim Then R.Assign(31, 9, 48, 15)
+  Else R.Assign(31, 9, 48, 14);
+9:R.Assign(27, 9, 53, 14);
+10:R.Assign(31, 9, 48, 15);
+
+Else;
+End;
+
+{
+If Reg=0 Then R.Assign(31, 9, 48, 14)
+Else R.Assign(29, 9, 51, 14);
+}
+
+
+Case Reg Of
+0,1,2,3,4,12,15:New(Dlg, Init(R, 'Точнее'));
+11:New(Dlg, Init(R, 'Точнее'));
+5:New(Dlg, Init(R, 'Сортировка'));
+6:New(Dlg, Init(R, 'Вид расхода'));
+7:New(Dlg, Init(R, 'Вид прихода'));
+8:New(Dlg, Init(R, 'Вид расхода'));
+10:New(Dlg, Init(R, 'Вид прихода'));
+Else New(Dlg, Init(R, 'Точнее'));;
+End;
+
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+
+c:=2;
+
+Case Reg Of
+0:Begin
+  R.Assign(1, 1, 16, 4);
+  If Not(Regim) Then
+  Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('С ~к~лиентом',
+  NewSItem('Со ~с~кладом',
+  NewSItem('~В~се', Nil)))));
+  End
+Else
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~О~плаченные',
+  NewSItem('В~ы~данные',
+  NewSItem('~В~се', Nil)))));
+ End;
+1: Begin
+   R.Assign(1, 1, 21, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~Н~е просроченные',
+  NewSItem('~П~росроченные',
+  NewSItem('~В~се', Nil)))));
+ End;
+
+2: Begin
+  R.Assign(1, 1, 22, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~О~плата в кассу',
+  NewSItem('Оплата во~з~вратом',
+  NewSItem('~В~се оплаты', Nil)))));
+ End;
+
+11: Begin
+  R.Assign(1, 1, 22, 5);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Отгрузки',
+  NewSItem('Оплата консигнации',
+  NewSItem('Во~з~враты',
+  NewSItem('~В~се', Nil))))));
+ End;
+
+3: Begin
+  R.Assign(1, 1, 21, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~П~риходная часть',
+  NewSItem('~Р~асходная часть',
+  NewSItem('~В~се', Nil)))));
+ End;
+4: Begin
+  R.Assign(1, 1, 16, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~С~ прих.',
+  NewSItem('Б~е~з прих.',
+  NewSItem('~В~се', Nil)))));
+ End;
+
+5:Begin
+   R.Assign(1, 1, 21, 4);
+   Control := New(PRadioButtons, Init(R,
+   NewSItem('По кодам',
+   NewSItem('По наименованию',
+   NewSItem('По штуч. продажам', Nil)))));
+  End;
+6:Begin
+  R.Assign(1, 1, 20, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('С ~к~лиентом',
+  NewSItem('Со ~с~кладом',
+  NewSItem('~В~се', Nil)))));
+  c:=0;
+  End;
+7:Begin
+  R.Assign(1, 1, 20, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('С ~к~лиентом',
+  NewSItem('Со ~с~кладом',
+  NewSItem('~В~се', Nil)))));
+  c:=0;
+  End;
+8:Begin
+  R.Assign(1, 1, 16, 5);
+  If Not(Regim) Then
+  Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('С ~к~лиентом',
+  NewSItem('Со ~с~кладом',
+  NewSItem('В ~о~бмен',
+  NewSItem('~В~се', Nil))))));
+  End
+Else
+  Begin
+  R.Assign(1, 1, 16, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~О~плаченные',
+  NewSItem('В~ы~данные',
+  NewSItem('~В~се', Nil)))));
+  End;
+  End;
+
+9: Begin
+  R.Assign(1, 1, 25, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~Р~асходы из кассы',
+  NewSItem('~П~оступления в кассу',
+  NewSItem('~В~се', Nil)))));
+ End;
+
+10:Begin
+  R.Assign(1, 1, 16, 5);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('С ~к~лиентом',
+  NewSItem('Со ~с~кладом',
+  NewSItem('В ~о~бмен',
+  NewSItem('~В~се', Nil))))));
+  End;
+
+12: Begin
+  R.Assign(1, 1, 25, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Разблокированные',
+  NewSItem('Заблокированные',
+  NewSItem('~В~се', Nil)))));
+ End;
+
+15: Begin
+  R.Assign(1, 1, 25, 4);
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Оптовые',
+  NewSItem('Розничные',
+  NewSItem('~В~се', Nil)))));
+  c:=2;
+ End;
+
+
+
+Else;
+End;
+
+{
+If Reg=0 Then
+Begin
+R.Assign(1, 1, 16, 4);
+If Not(Regim) Then
+Control := New(PRadioButtons, Init(R,
+  NewSItem('С ~к~лиентом',
+  NewSItem('Со ~с~кладом',
+  NewSItem('~В~се', Nil)))))
+Else
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~О~плаченные',
+  NewSItem('В~ы~данные',
+  NewSItem('~В~се', Nil)))));
+End
+Else
+ Begin
+R.Assign(1, 1, 21, 4);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~Н~е просроченные',
+  NewSItem('~П~росроченные',
+  NewSItem('~В~се', Nil)))));
+ End;
+}
+
+Dlg^.Insert(Control);
+
+If Not Reg in [8,11] Then c:=2
+Else If Not(Regim) Then c:=3 Else c:=2;
+
+
+
+Dlg^.SetData(c);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+   Dlg^.GetData(c);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectSpecify:=c;
+  End
+  Else
+  Begin
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectSpecify:=3;
+   if Not reg in [8,11] then SelectSpecify:=3
+   else SelectSpecify:=4;
+  End;
+end;
+
+
+
+
+
+
+Function SelectSort:Byte;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+SelectSort:=0;
+
+R.Assign(26, 9, 53, 13);
+New(Dlg, Init(R, 'Вид сортировки'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+
+R.Assign(1, 1, 26, 3);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Ра~з~делы по коду',
+  NewSItem('Разделы по ~а~лфавиту', Nil))));
+
+Dlg^.Insert(Control);
+
+c:=0;
+
+Dlg^.SetData(c);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+   Dlg^.GetData(c);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectSort:=c;
+  End
+  Else
+  Begin
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectSort:=2;
+  End;
+end;
+
+Function SelectImport(k:Word):Byte;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+SelectImport:=1;
+
+R.Assign(26, 9, 56, 13);
+New(Dlg, Init(R, 'Назначение'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+
+R.Assign(1, 1, 29, 3);
+
+If k in [30,31] Then
+R.Assign(1, 1, 33, 3);
+
+
+Case k Of
+0:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~К~онвертировать в Excel',
+  NewSItem('~П~ечать из DOS', Nil))))
+  eND;
+1:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~С~водные продажи',
+  NewSItem('~М~аксимальные розничные', Nil))));
+  End;
+2:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Количество в ~ш~туках',
+  NewSItem('Количество в ~у~паковках', Nil))));
+  End;
+3:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~П~ромежуточный отчет',
+  NewSItem('П~о~лный отчет за день', Nil))));
+  End;
+4:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('П~о~лная ведомость',
+  NewSItem('~Т~олько отгруженные',Nil))));
+  End;
+5:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Долги реальные по опл.',
+  NewSItem('Долги теоретические ',Nil))));
+  End;
+6:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Включить рейтинг',
+  NewSItem('Включить З/Цены',Nil))));
+  End;
+
+7:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Скидка процентом',
+  NewSItem('Скидка суммой',Nil))));
+  End;
+8:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Указать доставку',
+  NewSItem('Не указывать доставку',  Nil))));
+  End;
+9:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Не включая бронь',
+  NewSItem('Включая бронь',  Nil))));
+  End;
+10:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Развернутые оплаты',
+  NewSItem('Сокращенные оплаты',  Nil))));
+  End;
+
+11:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Сумма скидки',
+  NewSItem('Доходность',  Nil))));
+  End;
+
+12:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('~С~тандартный вариант',
+  NewSItem('С ~з~акупочными ценами',  Nil))));
+  End;
+
+13:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Наименование+Поставщик',
+  NewSItem('Наименование+Цены...',
+  Nil))));
+  End;
+
+14:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Для Бухгалтерии',
+  NewSItem('Стандартный отчет',  Nil))));
+  End;
+
+15:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Просмотреть ~о~тгрузку',
+  NewSItem('Просмотреть ~в~озврат',  Nil))));
+  End;
+
+16:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Сгрупировать по датам',
+  NewSItem('Сгруппировать по накл.',  Nil))));
+  End;
+
+17:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Закупка для бухгалтерии',
+  NewSItem('Закупка 2',  Nil))));
+  End;
+
+18:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Сводный отчет',
+  NewSItem('Задолженность/Предоплата',  Nil))));
+  End;
+
+19:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Полный отчет',
+  NewSItem('Краткий отчет',  Nil))));
+  End;
+
+20:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Большие ценники',
+  NewSItem('Малые ценники',  Nil))));
+  End;
+
+21:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Отгрузки и возвраты',
+  NewSItem('Расчет доходности',
+  Nil))));
+  End;
+
+22:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('По розничным ценам',
+  NewSItem('По закупочным ценам',  Nil))));
+  End;
+
+23:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Форма N ~1~',
+  NewSItem('Форма N ~2~',  Nil))));
+  End;
+
+24:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Показывать все',
+  NewSItem('Только разногласия',  Nil))));
+  End;
+
+25:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Крупный',
+  NewSItem('Детальный',  Nil))));
+  End;
+
+26:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('С содержимым',
+  NewSItem('Без содержимого',  Nil))));
+  End;
+
+27:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('По отделениям',
+  NewSItem('Сводный',  Nil))));
+  End;
+
+28:Begin
+  Control := New(PRadioButtons, Init(R,
+  NewSItem('Форма 1',
+  NewSItem('Форма 2',  Nil))));
+  End;
+
+31:
+  Begin
+   R.Assign(1, 1, 31, 3);
+   Control := New(PRadioButtons, Init(R,
+   NewSItem('Сводный отчет',
+   NewSItem('Персональный по агентам',
+   Nil))));
+  End;
+32:
+  Begin
+   R.Assign(1, 1, 33, 3);
+   Control := New(PRadioButtons, Init(R,
+   NewSItem('Сводный отчет',
+   NewSItem('Персональный по маршрутам',
+   Nil))));
+  End;
+
+
+
+Else;
+End;
+
+Dlg^.Insert(Control);
+
+c:=1;
+
+If k=3 Then
+ Begin
+  If (TestOpenDate1(FDate)) Then c:=0;
+ End;
+
+Dlg^.SetData(c);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+   Dlg^.GetData(c);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectImport:=c;
+  End
+  Else
+  Begin
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectImport:=2;
+  End;
+end;
+
+
+
+
+
+Function SelectRegion(Ext:Boolean):Byte;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+SelectRegion:=0;
+
+R.Assign(32, 8, 47, 14);
+if ext Then
+R.Assign(32, 8, 47, 16);
+New(Dlg, Init(R, ''));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+
+R.Assign(1, 1, 14, 5);
+If Ext Then
+R.Assign(1, 1, 14, 7);
+
+if Not Ext Then
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~О~фис',
+  NewSItem('~Г~ород',
+  NewSItem('О~б~ласть',
+  NewSItem('Ре~з~ерв', Nil))))))
+Else
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~О~фис',
+  NewSItem('~Г~ород',
+  NewSItem('О~б~ласть',
+  NewSItem('Ре~з~ерв',
+  NewSItem('Спец',
+  NewSItem('Персон.',
+  Nil))))))));
+
+Dlg^.Insert(Control);
+
+c:=0;
+
+Dlg^.SetData(c);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+  Begin
+   Dlg^.GetData(c);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectRegion:=c;
+  End
+  Else
+  Begin
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   SelectRegion:=5;
+  End;
+end;
+
+
+
+Function Test3000(Cod:ArtikulStr;Summa:AllStr):Boolean;
+Var    s : TEnjoyStr;
+Begin
+ Test3000:=True;
+ s:=GetClientField(FClient,Cod,0);
+ If not(Pos(' ЧП',s)>0) And (StrToReal(Summa)>PrihodMax) Then
+ Test3000:=False;
+End;
+
+
+Function SelectOtd(Var l : Word):Boolean;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+
+begin
+SelectOtd:=False;
+
+R.Assign(27, 8, 52, 18);
+New(Dlg, Init(R, 'Отделения'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx:=$E241;
+
+R.Assign(1, 1, 24, 9);
+Control := New(PCheckboxes, Init(R,
+  NewSItem('~1~ '+Rek.Otdel[1],
+  NewSItem('~2~ '+Rek.Otdel[2],
+  NewSItem('~3~ '+Rek.Otdel[3],
+  NewSItem('~4~ '+Rek.Otdel[4],
+  NewSItem('~5~ '+Rek.Otdel[5],
+  NewSItem('~6~ '+Rek.Otdel[6],
+  NewSItem('~7~ '+Rek.Otdel[7],
+  NewSItem('~8~ '+Rek.Otdel[8],
+  Nil))))))))));
+Control^.Options := Control^.Options or ofFramed;
+Dlg^.Insert(Control);
+Dlg^.SetData(L);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+ Begin
+  Dlg^.GetData(l);
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+  SelectOtd:=True;
+
+ End
+ Else Begin
+       Dispose(Control,Done);
+       Dispose(Dlg,Done);
+      End;
+
+end;
+
+function FExists(FileName: String): Boolean;
+var
+  F: file;
+  Attr: Word;
+begin
+  Attr:=IOResult;
+  Assign(F, FileName);
+  GetFAttr(F, Attr);
+  Attr:=IOResult;
+  FExists := DosError = 0;
+  Attr:=IOResult;
+end;
+
+
+Function CalcMesto(E:PSuperMArketType):ArtikulStr;
+VAr ws:AllStr;
+    i : Word;
+    Mesto:Word;
+Begin
+ CalcMesto[0]:=#0;
+ Mesto:=0;
+ For i:=1 To E^.DAt.Amount Do
+  Begin
+   ws:=CalcPack(E^.Dat.MarketElement[i].Bazkod,
+                E^.Dat.MarketElement[i].Input.Kol);
+   DelSpace(ws);
+   If Pos('+',ws)>0 Then ws:=Copy(ws,1,Pos('+',ws)-1);
+   Mesto:=Mesto+StrToInt(ws);
+  End;
+  Str(Mesto:CKol-1,ws);
+  CalcMesto:=ws;
+End;
+
+Function CalcMestoOtdel(E:PSuperMArketType;Otdel:MaskaNew):ArtikulStr;
+VAr ws:AllStr;
+    i : Word;
+    Mesto:Word;
+Begin
+ CalcMestoOtdel[0]:=#0;
+ Mesto:=0;
+ For i:=1 To E^.DAt.Amount Do
+  Begin
+  If Otdel[E^.Dat.MarketElement[i].Input.DivisionSNumber]=1 Then
+ Begin
+   ws:=CalcPack(E^.Dat.MarketElement[i].Bazkod,
+                E^.Dat.MarketElement[i].Input.Kol);
+   DelSpace(ws);
+   If Pos('+',ws)>0 Then ws:=Copy(ws,1,Pos('+',ws)-1);
+   Mesto:=Mesto+StrToInt(ws);
+ End;
+  End;
+  Str(Mesto:CKol-1,ws);
+  CalcMestoOtdel:=ws;
+End;
+
+Procedure DelFlag;
+Var f : File;
+Begin
+Assign(f,Path.FileFlag);
+Erase(f);
+End;
+
+
+Function TestFlag:Boolean;
+Var f : File;
+    c : Byte;
+Begin
+If FindParam('/TERMINAL') Then Exit;
+TestFlag:=False;
+Assign(f,Path.FileFlag);
+c:=IOResult;
+Reset(f);
+c:=IOResult;
+If c=0 Then
+Begin
+Close(F);
+TestFlag:=True;
+End
+Else
+ Begin
+  Rewrite(f);
+  Close(f);
+ End;
+End;
+
+
+
+Procedure CreatSpecialFile(Doc:Word;Date:TDateString);
+Var F : file;
+    s : PathStr;
+    i : byte;
+Begin
+ Case Doc Of
+DocProtocol:s:=Path.ToProtocol+Date+'.pr';
+
+DocProtocolReturn:s:=Path.ToProtocol+Date+'.vpr';
+
+DocPrihod:s:=Path.ToPrihod+Date+'.prh';
+
+DocPereozen:s:=Path.ToCorrect+Date+'.prz';
+
+DocReturn:s:=Path.ToReturn+Date+'.vzw';
+
+DocRewisia:s:=Path.ToRewisia+Date+'.rwz';
+
+DocMArket:s:=Path.ToMarket+Date+'.mrk';
+
+DocTransport:s:=Path.ToRewisia+Date+'.trn';
+
+
+DocOplata:s:=Path.ToOplata+Date+'.opl';
+
+DocBArterOplata:s:=Path.ToBArter+Date+'.bpl';
+
+DocKAssa:s:=Path.ToClient+Date+'.kas';
+ Else;
+ End;
+
+ Assign(f,s);
+ i:=IOResult;
+ Reset(f);
+ i:=IOResult;
+ If i<>0 Then
+   Begin
+    Rewrite(f);
+    i:=IOResult;
+    If i<>0 Then
+     Begin
+      MessageBox(#3'Ошибка создания '+s+'!'+
+      ^M+#3+ClicProgrammer+' Существует опасность потери данных!',Nil,mfFatalError+mfCancelButton);
+      Exit;
+     End
+     Else
+      MessageBox(^M+#3'Файл '+s+' успешно cоздан!',Nil,mfInformation+mfCancelButton);
+   End
+    Else
+      MessageBox(^M+#3'Файл '+s+' уже существует!',Nil,mfInformation+mfCancelButton);
+  Close(f);
+  i:=IOResult;
+End;
+
+
+Function SelectVidFullInfo(A:Word;M:Maska6):Word;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+
+Begin
+SelectVidFullInfo:=0;
+R.Assign(24, 9, 56, 14);
+New(Dlg, Init(R, 'Укажите вид операций'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(1, 1, 31, 4);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~П~риход',
+  NewSItem('~О~тгрузка',
+  NewSItem('~В~озврат',
+  NewSItem('П~е~реоценка',
+  NewSItem('Ревизи~я~',
+  NewSItem('~Р~/П', Nil))))))));
+Dlg^.Insert(Control);
+
+Dlg^.SetData(A);
+
+BitToWord6(M,a);
+
+PCluster(Control)^.SetButtonState(a, False);
+
+Dlg^.SelectNext(False);
+
+
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+ Begin
+  Dlg^.GetData(c);
+  Dispose(Control,Done);
+  Inc(c);
+  SelectVidFullInfo:=C;
+ End
+ Else SelectVidFullInfo:=0;
+ Dispose(Control,Done);
+ Dispose(Dlg,Done);
+End;
+
+
+
+Function SelectDSertif(Var VidProsmotra,Diapason:Word):Boolean;
+Label 1;
+var
+  DataRec : record
+    VidProsmotra : Word;
+    Diapason : String[3];
+  end;
+
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  Res : Word;
+  S : String[3];
+begin
+Res:=14;
+DataRec.Diapason:='14';
+DataRec.VidProsmotra:=1;
+
+1:
+R.Assign(13, 9, 67, 13);
+New(Dlg, Init(R, 'Анализ'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.Palette := dpCyanDialog;
+Dlg^.HelpCtx := $E002;
+
+
+R.Assign(1, 1, 30, 3);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Вывести базу полностью',
+  NewSItem('Отбор по сроку действия', Nil))));
+Dlg^.Insert(Control);
+
+R.Assign(31, 1, 53, 3);
+Control := New(PColoredText, Init(R, 'Срок истекает менее чем чере'+
+     'з:', $3E));
+Dlg^.Insert(Control);
+
+
+R.Assign(47, 2, 52, 3);
+Control := New(PInputLine, Init(R, 3));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['1','2','3','4','5','6','7','8','9','0']));
+
+  Dlg^.SetDAta(DataRec);
+Dlg^.SelectNext(False);
+Res := Desktop^.ExecView(dlg);
+If Res<>cmCancel Then
+ Begin
+  Dlg^.GetData(DataRec);
+  If DataRec.VidProsmotra=1 Then
+  Begin
+   Res:=StrToInt(DataRec.Diapason);
+   If Res=0 Then
+   Begin
+    Dispose(Control,Done);
+    Dispose(Dlg,Done);
+    MessageBox(^M+#3'Недопустимый диапазон поиска!',Nil,mfError+mfCancelButton);
+    Goto 1;
+   End;
+  End;
+  VidProsmotra:=DataRec.VidProsmotra;
+  Diapason:=Res;
+  SelectDSertif:=True;
+ End
+ Else
+  SelectDSertif:=False;
+
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+End;
+
+
+
+
+Function SelectVidOstatkiMarket(Var Regim,Srok:Word;Var Start:TDateString):Boolean;
+Label 1;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+  l : LongInt;
+var
+  DataRec : record
+    Vid : Word;
+    DAte1 : String[1];
+    DAte2 : TDateString;
+  end;
+
+begin
+Regim:=0;
+DAtaRec.Vid:=Regim;
+DataRec.DAte1:='8';
+DataRec.DAte2:=FDate;
+SelectVidOstatkiMarket:=False;
+1:
+R.Assign(22, 9, 57, 13);
+New(Dlg, Init(R, 'Параметры расчета'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+
+R.Assign(1, 1, 17, 3);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('По дням',
+  NewSItem('По неделям', Nil))));
+Dlg^.Insert(Control);
+
+R.Assign(31, 1, 34, 2);
+Control := New(PInputLine, Init(R, 1));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['1','2','3','4','5','6','7','8']));
+
+  R.Assign(17, 1, 31, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Дней(недель):', Control)));
+
+R.Assign(24, 2, 34, 3);
+Control := New(PInputLine, Init(R, CDAte));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PPXPictureValidator, Init(DateFiltr, True));
+
+  R.Assign(21, 2, 24, 3);
+  Dlg^.Insert(New(PLabel, Init(R, '~с~:', Control)));
+
+
+
+Dlg^.SelectNext(False);
+Dlg^.SetDAta(DataRec);
+c := Desktop^.ExecView(Dlg);
+if c<>cmCancel Then
+Begin
+ Dlg^.GetDAta(DAtarec);
+ Regim:=DataRec.Vid;
+ Srok:=StrToInt(DataRec.Date1);
+ If Srok=0 Then
+  Begin
+   MessageBox(#3'Не указан срок расчета!',Nil,mfError+mfCancelButton);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   Goto 1;
+  End;
+ If (DataRec.Date2[0]=#0) Then
+  Begin
+   MessageBox(#3'Не указана дата начала расчета!',Nil,mfError+mfCancelButton);
+   Dispose(Control,Done);
+   Dispose(Dlg,Done);
+   Goto 1;
+  End;
+  If Not(TestDate(DataRec.Date2,L)) Then
+   Begin
+    MessageBox(^M+#3'Ошибка при вводе указании даты начала расчета!',Nil,mfError+mfCancelButton);
+    Dispose(Control,Done);
+    Dispose(Dlg,Done);
+    Exit;
+   End;
+   Start:=DataRec.Date2;
+ SelectVidOstatkiMarket:=True;
+End;
+ Dispose(Control,Done);
+ Dispose(Dlg,Done);
+end;
+
+(*
+Function SelectShkala(Var l : Word):Boolean;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+begin
+SelectShkala:=False;
+R.Assign(33, 7, 47, 16);
+New(Dlg, Init(R, ''));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 1, 13, 8);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('~Р~/Цена',
+  NewSItem('Цена ~1~',
+  NewSItem('Цена ~2~',
+  NewSItem('Цена ~3~',
+  NewSItem('Цена ~4~',
+  NewSItem('Цена ~5~',
+  NewSItem('Цена ~6~', Nil)))))))));
+Dlg^.Insert(Control);
+
+Dlg^.SetDAta(l);
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+if c<>cmCancel Then
+Begin
+ SelectShkala:=True;
+ Dlg^.GetData(l);
+End;
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+end;
+*)
+
+
+
+
+
+
+
+
+Procedure SortNKL (Var L:PSuperMarketType);
+Var i : Word;
+    R : TRect;
+    E : PSuperMarketType;
+    Wl,Wk,Wn : AllStr;
+    S : TMyString;
+    TempBox : PBox;
+Begin
+
+ R.Assign(0, 0, 0, 0);
+ TempBox := New(PBox, Init(R, 1, Nil));
+ TempBox^.NewList(New(PTextCollection, Init(0,1)));
+ For i :=1 To L^.Dat.Amount Do
+  Begin
+   With L^.Dat.MarketElement[i].Input Do
+   Begin
+   Format(Kol,CKol);
+   Format(Zena,CZena);
+   Format(Skidka,CZena);
+   Format(Itogo,CInputIZena);
+   Format(R_Zena,CZena);
+   Format(O_Zena,CZena);
+   Format(Proz,CLitr+1);
+   Format(SpecNalog,CLitr);
+   Format(NDS,CLitr);
+   Format(Zakupka,CZena);
+   Wk := Copy(L^.Dat.MarketElement[i].BazKod,1,CRazdelKod);
+   Wn := GetIdField(FName,L^.Dat.MarketElement[i].BazKod);
+   Wl := GetIdField(FLitr,L^.Dat.MarketElement[i].BazKod);
+   Format (wn,CName);
+   Str(L^.Dat.MarketElement[i].Input.DivisionSNumber:1,s);
+   s:=s+'│'+wk+'│'+Wn+'│'+L^.Dat.MarketElement[i].BazKod+'│'+
+   +L^.Dat.MarketElement[i].Input.Kol+'│'+Wl+'│'+L^.Dat.MarketElement[i].Input.Zena+'│'+
+   +L^.Dat.MarketElement[i].Input.Skidka+'│'+L^.Dat.MarketElement[i].Input.R_Zena+'│'+
+   +L^.Dat.MarketElement[i].Input.O_Zena+'│'+L^.Dat.MarketElement[i].input.Itogo+'│'+L^.Dat.MarketElement[i].Input.Proz+
+   '│'+L^.Dat.MarketElement[i].Input.SpecNalog+'│'+IntToStr(VidNalog,COne)+
+   '│'+L^.Dat.MarketElement[i].Input.Nds+'│'+IntToStr(VidNDS,COne)+
+   '│'+L^.Dat.MarketElement[i].Input.Zakupka;
+   TempBox^.List^.Insert(NewStr(s));
+   TempBox^.SetRange(TempBox^.List^.Count);
+   End;{With}
+  End;{For}
+  New(E,Init);
+  E^.Dat:=L^.Dat;
+
+If (TempBox^.List^.Count)>0 Then
+For i:=0 To TempBox^.List^.Count-1 Do
+ Begin
+  s:=TempBox^.GetText(i,TempBox^.List^.Count);
+{для новой структуры стороки}
+  E^.Dat.MarketElement[i+1].BazKod:=Copy(s,1+COne+1+CRazdelKod+1+CName+1,CArtikul);
+  With E^.Dat.MarketElement[i+1].Input Do
+   Begin
+   {
+    NDS:=BakGetField(FNds,E^.Dat.MarketElement[i+1].BazKod,0);
+    DelSpace(Nds);
+   }
+    Kol:=Copy(s,1+COne+1+CName+1+CArtikul+1+CRazdelKod+1,CKol);
+    DelSpace(Kol);
+    Zena:=Copy(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CRazdelKod+1,CZena);
+    DelSpace(Zena);
+    Skidka:=Copy(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CRazdelKod+1,CZena);
+    DelSpace(Skidka);
+    Itogo:=Copy(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+CZena+1+CZena+1+CRazdelKod+1,CInputIZena);
+    DelSpace(Itogo);
+    R_Zena:=Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+COne+1+CRazdelKod+1,CZena);
+    DelSpace(R_Zena);
+    O_Zena:=Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+COne+1+CZena+1+CRazdelKod+1,CZena);
+    DelSpace(O_Zena);
+
+    DiviSionSNumber:=StrToInt(Copy(s,1,COne));
+    Proz:=Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+CZena+1+CZena+1+CInputIZena+1+COne+1+CRazdelKod+
+    1{CZena+1},CLitr+1);
+    DelSpace(Proz);
+
+    SpecNalog:=Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+CZena+1+CZena+1+CInputIZena+1+COne+1+CRazdelKod+
+    1+(CLitr+1)+1,CLitr);
+    DelSpace(SpecNalog);
+
+    VidNalog:=StrToInt(Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+CZena+1+CZena+1+CInputIZena+1+COne+
+    1+CRazdelKod+1+(CLitr+1)+1+CLitr+1,COne));
+
+    NDS:=Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+CZena+1+CZena+1+CInputIZena+1+COne+
+    1+CRazdelKod+1+(CLitr+1)+1+CLitr+1+COne+1,CLitr);
+    DelSpace(NDS);
+
+    VidNDS:=StrToInt(Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+CZena+1+CZena+1+CInputIZena+1+COne+
+    1+CRazdelKod+1+(CLitr+1)+1+CLitr+1+COne+1+CLitr+1,COne));
+
+    Zakupka:=Copy(s,1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1+CZena+1+CZena+1+CZena+1+CInputIZena+1+COne+
+    1+CRazdelKod+1+(CLitr+1)+1+CLitr+1+COne+1+CLitr+1+COne+1,CZena);
+    DelSpace(Zakupka);
+
+   End;
+ End;
+ L^.Dat:=E^.Dat;
+ Dispose(TempBox,Done);
+ Dispose(E,Done);
+
+End;
+
+
+Procedure GlobalNazenka(ClKod:ArtikulStr;Op:Word);
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+  st : ArtikulStr;
+  ws,Zena : TDateString;
+  s : String;
+  WspomList1:PBox;
+  ls : Word;
+  SArt : ArtikulStr;
+  Add : Boolean;
+begin
+If Prodaga^.List^.Count>0 Then
+Begin
+R.Assign(29, 10, 50, 13);
+New(Dlg, Init(R, 'Наценка'));
+Dlg^.Palette := dpCyanDialog;
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E003;
+R.Assign(10, 1, 17, 2);
+Control := New(PInputLine, Init(R, CKol));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 1, 10, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Наценка:', Control)));
+
+R.Assign(18, 1, 20, 2);
+Control := New(PColoredText, Init(R, '%',$BE));
+Dlg^.Insert(Control);
+
+
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+If c<>cmCancel Then
+ Begin
+  Dlg^.GetData(st);
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+  DelSpace(St);
+  {вставить код изменения скидки}
+
+  If (StrToReal(St)>15.00) And Not(CurrentPassword='00') Then
+   Begin
+    MessageBox(^M+#3'Ваш уровень доступа не позволяет провести данную операцию!',Nil,mfWarning+mfCancelButton);
+    Exit;
+   End;
+  {вставить код изменения скидки}
+
+If Prodaga^.List^.Count>0 Then
+Begin
+
+  R.Assign(0,0,0,0);
+  WspomlIST1 := New(PBox, Init(R, 1, Nil));
+  WspomList1^.NewList(New(PTextCollection, Init(0,1)));
+
+For ls:=0 To Prodaga^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=Prodaga^.GetText(ls,Prodaga^.List^.Count);
+ SArt:=Copy(s,1,CArtikul);
+ Add:=True;
+ If Op=0 Then
+  Begin
+   If TestSpec(SArt,ClKod) Then Add:=False;
+  End;
+
+ If Add Then
+ Begin
+ Zena:=Copy(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1,CZena);
+ Str((StrToReal(Zena)*StrToReal(st)/(-100)):CZena:CMantissa,ws);
+{Удаляем старую ручную скидку}
+ System.Delete(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1,CZena);
+{Добавляем новую ручную скидку}
+ System.Insert(ws,S,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1);
+{вставляем исправленную строку}
+ End;
+ WspomList1^.List^.Insert(NewStr(s));
+ WspomList1^.SetRange(WspomList1^.List^.Count);
+End;{For}
+
+{очистка Prodaga}
+  Prodaga^.NewList(Nil);
+  Prodaga^.NewList(New(PTextCollection, Init(0,1)));
+
+{обновление Prodaga}
+For ls:=0 To WspomList1^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=WspomList1^.GetText(ls,WspomList1^.List^.Count);
+ Prodaga^.List^.Insert(NewStr(s));
+ Prodaga^.SetRange(Prodaga^.List^.Count);
+End;{For}
+
+{удаление Wspom}
+Dispose(WspomList1,Done);
+End;{Prodaga^.List^.Count>0}
+ End
+ Else
+ Begin
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+ End;
+End;{If Prodaga^.List^.Count>0 Then}
+end;
+
+
+Procedure GlobalSkidka(ClKod:ArtikulStr;Op:Word);
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+  st : String[CLitr+1];
+  SArt,SArt1,ws,Zena : TDateString;
+  s : String;
+  WspomList1:PBox;
+  ls : Word;
+  Add : Boolean;
+begin
+If Prodaga^.List^.Count>0 Then
+Begin
+
+R.Assign(28, 9, 50, 12);
+New(Dlg, Init(R, 'Скидка'));
+Dlg^.Palette := dpCyanDialog;
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E004;
+R.Assign(10, 1, 19, 2);
+Control := New(PInputLine, Init(R, CLitr+1));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 1, 9, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Скидка:', Control)));
+
+
+c:=Desktop^.ExecView(Dlg);
+
+If c<>cmCancel Then
+ Begin
+  Dlg^.GetData(st);
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+  DelSpace(St);
+
+  If {(StrToReal(St)>20) And} Not(CurrentPassword='00') Then
+   If Not (NewPassword(4)) Then Exit;
+
+
+  If StrToReal(st)<1.0000 Then
+   Begin
+    Messagebox(^M+#3'Недопустимое ЗНАЧЕНИЕ скидки!',Nil,mfError+mfCancelButton);
+    Exit;
+   End;
+   {вставить код изменения скидки}
+
+If Prodaga^.List^.Count>0 Then
+Begin
+
+  R.Assign(0,0,0,0);
+  WspomlIST1 := New(PBox, Init(R, 1, Nil));
+  WspomList1^.NewList(New(PTextCollection, Init(0,1)));
+
+For ls:=0 To Prodaga^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=Prodaga^.GetText(ls,Prodaga^.List^.Count);
+ SArt:=Copy(s,1,CRazdelKod);
+ SArt1:=Copy(s,1,CArtikul);
+
+ Add:=True;
+ If Op=0 Then
+  Begin
+   If TestSpec(SArt1,ClKod) Then Add:=False;
+  End;
+
+ If Add Then
+ Begin
+ {If StrToInt(SArt)<>20 Then}
+ Begin
+  Zena:=Copy(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1,CZena);
+  Str(StrToReal(Zena)-(StrToReal(Zena)*(1-(StrToReal(st)/100))):CZena:CMantissa,ws);
+{Удаляем старую ручную скидку}
+  System.Delete(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1,CZena);
+{Добавляем новую ручную скидку}
+  System.Insert(ws,S,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1);
+{вставляем исправленную строку}
+ End;
+ End;
+  WspomList1^.List^.Insert(NewStr(s));
+  WspomList1^.SetRange(WspomList1^.List^.Count);
+End;{For}
+{очистка Prodaga}
+  Prodaga^.NewList(Nil);
+  Prodaga^.NewList(New(PTextCollection, Init(0,1)));
+
+{обновление Prodaga}
+For ls:=0 To WspomList1^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=WspomList1^.GetText(ls,WspomList1^.List^.Count);
+ Prodaga^.List^.Insert(NewStr(s));
+ Prodaga^.SetRange(Prodaga^.List^.Count);
+End;{For}
+
+{удаление Wspom}
+Dispose(WspomList1,Done);
+End;{Prodaga^.List^.Count>0}
+ End
+ Else
+ Begin
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+ End;
+End;{If Prodaga^.List^.Count>0 Then}
+end;
+
+
+
+
+Procedure GlobalNazenka1(Var Res : AllStr);
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+  st : ArtikulStr;
+  ws,Zena : TDateString;
+  s : String;
+  WspomList1:PBox;
+  ls : Word;
+
+begin
+
+If Prodaga^.List^.Count>0 Then
+Begin
+
+  R.Assign(0,0,0,0);
+  WspomlIST1 := New(PBox, Init(R, 1, Nil));
+  WspomList1^.NewList(New(PTextCollection, Init(0,1)));
+
+For ls:=0 To Prodaga^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=Prodaga^.GetText(ls,Prodaga^.List^.Count);
+ Zena:=Copy(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1,CZena);
+ Str((StrToReal(Zena)*StrToReal(Res)):CZena:CMantissa,ws);
+{Удаляем старую ручную скидку}
+ System.Delete(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1,CZena);
+{Добавляем новую ручную скидку}
+ System.Insert(ws,S,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1);
+{вставляем исправленную строку}
+ WspomList1^.List^.Insert(NewStr(s));
+ WspomList1^.SetRange(WspomList1^.List^.Count);
+
+End;{For}
+{очистка Prodaga}
+  Prodaga^.NewList(Nil);
+  Prodaga^.NewList(New(PTextCollection, Init(0,1)));
+
+{обновление Prodaga}
+For ls:=0 To WspomList1^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=WspomList1^.GetText(ls,WspomList1^.List^.Count);
+ Prodaga^.List^.Insert(NewStr(s));
+ Prodaga^.SetRange(Prodaga^.List^.Count);
+End;{For}
+{удаление Wspom}
+Dispose(WspomList1,Done);
+End;{Prodaga^.List^.Count>0}
+end;
+
+
+(*
+
+Procedure GlobalSkidka1(Res:AllStr);
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+  st : ArtikulStr;
+  SArt,ws,Zena : TDateString;
+  s : String;
+  WspomList1:PBox;
+  ls : Word;
+begin
+If Prodaga^.List^.Count>0 Then
+Begin
+
+  R.Assign(0,0,0,0);
+  WspomlIST1 := New(PBox, Init(R, 1, Nil));
+  WspomList1^.NewList(New(PTextCollection, Init(0,1)));
+
+For ls:=0 To Prodaga^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=Prodaga^.GetText(ls,Prodaga^.List^.Count);
+ SArt:=Copy(s,1,CRazdelKod);
+ If StrToInt(SArt)<>20 Then
+ Begin
+  Zena:=Copy(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1,CZena);
+  Str(StrToReal(Zena)-(StrToReal(Zena)/(StrToReal(Res))):CZena:CMantissa,ws);
+{Удаляем старую ручную скидку}
+  System.Delete(s,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1,CZena);
+{Добавляем новую ручную скидку}
+  System.Insert(ws,S,1+COne+1+CName+1+CArtikul+1+CLitr+1+CKol+1+CZena+1);
+{вставляем исправленную строку}
+ End;
+  WspomList1^.List^.Insert(NewStr(s));
+  WspomList1^.SetRange(WspomList1^.List^.Count);
+End;{For}
+{очистка Prodaga}
+  Prodaga^.NewList(Nil);
+  Prodaga^.NewList(New(PTextCollection, Init(0,1)));
+
+{обновление Prodaga}
+For ls:=0 To WspomList1^.List^.Count-1 Do
+ Begin
+{артикул}
+ s:=WspomList1^.GetText(ls,WspomList1^.List^.Count);
+ Prodaga^.List^.Insert(NewStr(s));
+ Prodaga^.SetRange(Prodaga^.List^.Count);
+End;{For}
+
+{удаление Wspom}
+Dispose(WspomList1,Done);
+End;{Prodaga^.List^.Count>0}
+end;
+
+*)
+
+
+
+
+
+(*
+Procedure Unique(Path: String; Var FileName: String);
+Var
+  reg: TRegisters;
+  i: integer;
+  ErrCode: Byte;
+begin                                      { Unique }
+Repeat
+  FileName:='';
+  if Path='' then Exit;
+  for i:=1 to 15 do Path:=concat(Path,#0);
+  reg.ds:=Seg(Path[1]); reg.dx:=Ofs(Path[1]);
+  reg.cx:=0;
+  reg.ah:=$5A;
+  MsDos(reg);
+  ErrCode:=0;
+  if (reg.flags AND FCarry)=1 then ErrCode:=reg.ax;
+  if ErrCode=0 then
+  begin
+    FileName:=Path;
+    i:=1;
+    while (i<length(FileName)) and (FileName[i]<>#0) do Inc(i);
+    if FileName[i]=#0 then Delete(FileName,i,length(FileName)-i+1);
+    {
+      Now delete the zero length file created by DOS
+    }
+    reg.ds:=Seg(Path[1]); reg.dx:=Ofs(Path[1]);
+    reg.ah:=$3E;
+    reg.bx:=reg.ax;
+    MsDos(reg);
+  end;
+  DosError:=ErrCode;
+Until (ErrCode=0);
+end;                                      { Unique }
+*)
+
+
+{$IFNDEF Kurz}
+
+
+Procedure NewSkidkiIDX;
+VAr sklFile : SkidkaFileType;
+    skl : pSkidkaType;
+    s : ArtikulStr;
+    RazdelFile : File Of RazdelType;
+    RazdelElement : RazdelType;
+    F : Boolean;
+    Count,c : Word;
+    l : Word;
+Begin
+c:=IOResult;
+Assign(RazdelFile,Path.ToRazdel+'Razdel.db');
+Reset(RazdelFile);
+c:=IOResult;
+If c<>0 Then
+ Begin
+  MessageBox(^M+#3'Ошибка доступа к файлу разделов!',Nil,mfError+mfCancelButton);
+  Exit;
+ End;
+{ Seek(RazdelFile,26);}
+While Not(Eof(RazdelFile)) Do
+ Begin
+  Read(RazdelFile,RazdelElement);
+  If RazdelElement.Employ Then
+  Begin
+   DInfo('Идет переиндексация базы скидок - раздел '+RazdelElement.Kod+'...');
+
+   Assign(SklFile,Path.ToSkidki+RazdelElement.Kod+'.skl');
+   c:=IOResult;
+   Reset(SklFile);
+   c:=IOResult;
+If c<>0 Then
+ Begin
+  Close(RazdelFile);
+  NoInfo;
+  MessageBox(^M+#3'Ошибка доступа к файлу '+Path.ToSkidki+RazdelElement.Kod+'.skl',Nil,mfError+mfCancelButton);
+  Exit;
+ End;
+ {
+   Seek(SklFile,700);
+   Truncate(SklFile);
+   Exit;
+ }
+   New(Skl,Init);
+   Count:=0;
+   While Not(Eof(sklFile)) Do
+    Begin
+     Repeat
+      Pause(1);
+     Until NetCAll.Lock(SklFile,FilePos(SklFile)*SizeOf(SkidkaType),SizeOf(SkidkaType));
+
+     Read(SklFile,Skl^.Dat);
+
+     Str(Count:3,S);
+     RFormatZerro(s,3);
+     Skl^.Dat.BAZKod:=RazdelElement.Kod+s;
+     Skl^.Dat.Caption:=CurrentPassword;
+     Skl^.Dat.Date:=FDate;
+     Skl^.Dat.Time:=Times;
+
+     For l:=1 To {6}CShkala Do
+      Begin
+       Str(StrToReal(Skl^.DAt.Skidka[l].Proz):CLitr+1:CMantissa+2,Skl^.DAt.Skidka[l].Proz);
+       DelSpace(Skl^.DAt.Skidka[l].Proz);
+       Str(StrToReal(Skl^.DAt.Skidka[l].MinNaz):CLitr+1:CMantissa+2,Skl^.DAt.Skidka[l].MinNaz);
+       DelSpace(Skl^.DAt.Skidka[l].MinNaz);
+       Str(StrToReal(Skl^.DAt.Skidka[l].Up):CIZena:CMantissa,Skl^.DAt.Skidka[l].Up);
+       DelSpace(Skl^.DAt.Skidka[l].Up);
+      End;
+
+     Seek(SklFile,Filepos(SklFile)-1);
+     Write(SklFile,Skl^.Dat);
+
+   Repeat
+    NetCall.UnLock(SklFile,(FilePos(SklFile)-1)*SizeOf(SkidkaType),SizeOf(SkidkaType));
+   Until (DosError=0);
+
+     Inc(Count);
+    End;
+
+   Dispose(Skl,Done);
+   Close(SklFile);
+   NoInfo;
+   End;
+ End;
+Close(RazdelFile);
+MessageBox(^M+#3'Переиндексация скидок завершена!',Nil,mfInformation+mfCancelButton);
+End;
+
+
+Function KeySorting(Var Key,D:Word):Boolean;
+Var c: Word;
+    Dlg : PDialog;
+    R : TRect;
+    ControlKey,ControlD : PView;
+Begin
+KeySorting:=False;
+R.Assign(29, 4, 51, 18);
+New(Dlg, Init(R, 'Сортировка'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 2, 21, 9);
+ControlKey := New(PRadioButtons, Init(R,
+  NewSItem('Клиент',
+  NewSItem('Дата отгрузки',
+  NewSItem('Сумма к оплате',
+  NewSItem('Сумма по ЗЦ',
+  NewSItem('Доходность',
+  NewSItem('Шкала клиента',
+  NewSItem('Агент',
+  Nil)))))))));
+ControlKey^.SetData(Key);
+Dlg^.Insert(ControlKey);
+
+  R.Assign(1, 1, 18, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Ключ сортировки:', ControlKey)));
+
+R.Assign(1, 11, 21, 13);
+ControlD := New(PRadioButtons, Init(R,
+  NewSItem('По возрастанию',
+  NewSItem('По убыванию', Nil))));
+ControlD^.SetData(D);
+Dlg^.Insert(ControlD);
+
+  R.Assign(1, 10, 14, 11);
+  Dlg^.Insert(New(PLabel, Init(R, 'Направление:', ControlD)));
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+ Begin
+  ControlKey^.GetData(Key);
+  ControlD^.GetData(D);
+  KeySorting:=True;
+ End;
+Dispose(ControlKey,Done);
+Dispose(ControlD,Done);
+Dispose(Dlg,Done);
+End;
+
+
+
+Function TestRazdelMemory (Const S : AllStr;Const P : PBox) : Boolean;
+Var ls : Word;
+    k  : Byte;
+    st : String[CALL];
+Begin
+TestRazdelMemory:=True;
+For ls :=0 To P^.List^.Count Do
+Begin
+St:=P^.GetText(ls,P^.List^.Count);
+k:=Pos('│',St);
+ST:=Copy(St,K+1,CRazdelKod);
+If St=Copy(S,1,CRazdelKod) Then
+   Begin
+    TestRazdelMemory:=False;
+    Break;
+   End;
+End;
+End;
+
+
+Function LocationR(Const P:PBox;Const s:ArtikulStr;b:Boolean):Word;
+Var w,i: Word;
+    st : AllStr;
+Begin
+locationR:=0;
+For i:=0 To P^.List^.Count Do
+  Begin
+  LocationR:=i;
+  st:=P^.GetText(i,P^.List^.Count);
+  If Not(b) Then w:=Pos('│',st)
+  Else w:=0;
+  st:=Copy(st,w+1,CRazdelKod);
+  If St=Copy(s,1,CRazdelKod) Then
+               Break;
+  End;
+  If not(st=Copy(s,1,CRazdelKod)) Then
+  Begin
+  LocationR:=0;
+  MessageBox(#3'Элемент ('+s+') в списке не найден!'^M+
+  #3'Заменяю его на следующий!'^M+
+  #3'Немедленно позовите программиста!',Nil,mfInsertInApp+mfError+mfCancelButton);
+  End;
+End;
+
+
+
+Function KeySorting1(Var Key,D:Word):Boolean;
+Var c: Word;
+    Dlg : PDialog;
+    R : TRect;
+    ControlKey,ControlD : PView;
+Begin
+KeySorting1:=False;
+R.Assign(29, 4, 51, 18);
+New(Dlg, Init(R, 'Сортировка'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 2, 21, 9);
+ControlKey := New(PRadioButtons, Init(R,
+  NewSItem('Клиент',
+  NewSItem('Дата отгрузки',
+  NewSItem('Сумма к оплате',
+  NewSItem('Сумма по ЗЦ',
+  NewSItem('Доходность',
+  NewSItem('Шкала клиента',
+  Nil))))))));
+ControlKey^.SetData(Key);
+Dlg^.Insert(ControlKey);
+
+  R.Assign(1, 1, 18, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Ключ сортировки:', ControlKey)));
+
+R.Assign(1, 11, 21, 13);
+ControlD := New(PRadioButtons, Init(R,
+  NewSItem('По возрастанию',
+  NewSItem('По убыванию', Nil))));
+ControlD^.SetData(D);
+Dlg^.Insert(ControlD);
+
+  R.Assign(1, 10, 14, 11);
+  Dlg^.Insert(New(PLabel, Init(R, 'Направление:', ControlD)));
+
+Dlg^.SelectNext(False);
+c:=Desktop^.ExecView(Dlg);
+If c<>cmCancel Then
+ Begin
+  ControlKey^.GetData(Key);
+  ControlD^.GetData(D);
+  KeySorting1:=True;
+ End;
+Dispose(ControlKey,Done);
+Dispose(ControlD,Done);
+Dispose(Dlg,Done);
+End;
+
+{$ELSE}
+
+
+Function TestRazdelMemory (Const S : AllStr;Const P : PBox) : Boolean;
+BEgin
+End;
+
+
+Function LocationR(Const P:PBox;Const s:ArtikulStr;b:Boolean):Word;
+Begin
+End;
+
+Function KeySorting1(Var Key,D:Word):Boolean;
+Begin
+End;
+
+Procedure NewSkidkiIDX;
+Begin
+End;
+
+Function KeySorting(Var Key,D:Word):Boolean;
+Begin
+End;
+
+
+
+{$ENDIF}
+
+
+
+
+Var
+    Year, Month, Day, DayOfWeek: Word;
+{   s : String;}
+Begin
+{Readln(s);
+Writeln(Code(s));}
+
+ FindStrok[0]:=#0;
+ FindSymbol:=0;
+{GetDate(Year, Month, Day, DayOfWeek);
+ Year:=Year-1900;
+ GetFileName(Year, Month, Day,FDate);}
+ DateMask:='dd-mm-yy';
+ FDAte:=DateToDateString(DateMask,ToDay);
+ TekDate:=FDate;
+ LiZensia:=0;{1252.35;}
+ Status := DocNormal;
+ Assistent.Vid:=0;
+ Assistent.EditPosition[0]:=#0;
+ Assistent.D:=TekDate;
+ AssistentView.Vid:=0;
+ AssistentView.D:=TekDate;
+ Show:=False;
+ ShowMsg:=False;
+ ShowNetMsg:=False;
+ Path.TOProgram[0]:=#0;
+
+End.

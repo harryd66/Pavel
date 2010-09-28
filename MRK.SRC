@@ -1,0 +1,26 @@
+var
+  DataRec : record
+    Field1 : Word;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(0, 0, 80, 23);
+New(Dlg, Init(R, 'Dialog Design'));
+
+R.Assign(1, 4, 36, 5);
+Control := New(PRadioButtons, Init(R, 
+  NewSItem('Оф',
+  NewSItem('Гор',
+  NewSItem('Обл',
+  NewSItem('Рез', Nil))))));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

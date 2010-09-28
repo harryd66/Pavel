@@ -1,0 +1,405 @@
+{$IfNDEF DPMI}
+
+{$F+}
+{$O+}
+
+{$EndIf}
+
+
+{$I Compile.INC}
+
+Unit TrNakl;
+
+INTERFACE
+
+Uses Glob,ServStr;
+
+
+procedure FormTrNakl(E: PTransportType; var txt: text; Video: boolean);
+
+procedure PrintTransport(As: DocumentEdit);
+
+procedure ViewTransport(Date: TDateString);
+
+IMPLEMENTATION
+
+USes MSGBox,Serv,DBEngine,Printers,NetDbEng,TPDate,
+     Tools,Utils,Views;
+
+Function CalcTrMesto(E:PTransportType):ArtikulStr;
+VAr ws:AllStr;
+    i : Word;
+    Mesto:Word;
+Begin
+ CalcTrMesto[0]:=#0;
+ Mesto:=0;
+ For i:=1 To E^.DAt.Amount Do
+  Begin
+   ws:=CalcPack(E^.Dat.TransportElement[i].Bazkod,
+                E^.Dat.TransportElement[i].Input.Kol);
+   DelSpace(ws);
+   If Pos('+',ws)>0 Then ws:=Copy(ws,1,Pos('+',ws)-1);
+   Mesto:=Mesto+StrToInt(ws);
+  End;
+  Str(Mesto:CKol-1,ws);
+  CalcTrMesto:=ws;
+End;
+
+
+procedure FormTrNakl(E: PTransportType; var txt: text; Video: boolean);
+
+var i,IORez: word;
+    st,ss1,Separator,s,ss,ws,ws1,ws2,pp:string[150];
+    _Zena,_kol: real;
+    Space,Dop : AllStr;
+    Artikul: string [CArtikul];
+    BBBS : PBazType;
+Begin
+   If Video Then
+    Begin
+      space[0] := #0;
+      dop[0] :=#0;
+    End
+   Else
+    Begin
+      space := '  ';
+      dop := '';
+    End;
+   Separator:=' ';
+
+If Not Video Then DInfoMsg('Формирую документ внутреннего перемещения. Ждите...');
+
+   Writeln(txt,Space+Dop+'Поставщик: ',REk.Otdel[E^.Dat.MakeOtdelenie]);
+   Writeln(txt,Space+Dop+'Получатель: ',REk.Otdel[E^.Dat.ClientOtdelenie]);
+   {Writeln(txt);}
+   (*  Writeln(txt,Space+Dop+'');
+   Writeln(txt);*)
+If Not(FindParam('/EZ') Or (StrToInt(CurrentPassword)=0)) Then
+ Begin
+   Writeln(txt,Space+Dop+'┌───────────────────────────────────────────────────────────────────────────┐');
+   Writeln(txt,Space+Dop+'│N  Код  Наименование товара        Колич.  Р/Цена    Итого по Р/Ц  Упаковок│');
+   Writeln(txt,Space+Dop+'└───────────────────────────────────────────────────────────────────────────┘');
+ End
+                         {12│12345│12345678901234567890123456{12345│12345678│123456789012345│123456789}
+ Else
+  Begin
+   Writeln(txt,Space+Dop+'┌──────────────────────────────────────────────────────────────────────────────────────┐');
+   Writeln(txt,Space+Dop+'│N  Код  Наименование товара        Колич.  Р/Цена    Итого по Р/Ц   З/Цена    Упаковок│');
+   Writeln(txt,Space+Dop+'└──────────────────────────────────────────────────────────────────────────────────────┘');
+  End;
+                         {12│12345│12345678901234567890123456{12345│12345678│123456789012345│1234567890│123456789}
+
+   For i:=1 To E^.Dat.Amount Do
+   begin
+     { N }
+     Str(i:CMantissa,St);
+     { Код }
+     s:=E^.Dat.TransportElement[i].BazKod;
+     Artikul:=E^.Dat.TransportElement[i].BazKod;
+     {If i<>E^.Dat.Amount Then}
+     Separator:=' '  { Else Separator:=#249};
+
+ { Наименование товара }
+     If Nprint.FullName=0 Then
+     Begin
+      ws:=GetIdField(FName,E^.Dat.TransportElement[i].BazKod);
+      ws1:=GetIdField(FName2,E^.Dat.TransportElement[i].BazKod);
+      DelSpaceRight(ws1);
+      If ws1[0]<>#0 Then
+          Begin
+           Writeln(txt,Space+Dop+st+Separator+s+' '+ws);
+        Separator:=' ';
+        st:='  ';
+        ws:=ws1;
+        s:='     ';
+       End;
+     End
+     Else
+         Begin
+          ws:=GetIdField(FName,E^.Dat.TransportElement[i].BazKod);
+       ws1:=GetIdField(FName2,E^.Dat.TransportElement[i].BazKod);
+       DelSpaceRight(ws1);
+       If ws1[0]<>#0 Then
+          Begin
+           Writeln(txt,Space+Dop+st+Separator+S+' '+ws);
+        Separator:=' ';
+        st:='  ';
+        ws:=ws1;
+        s:='     ';
+       End;
+      End;
+
+     Format(ws,CName);
+     s:=s+' '+ws;
+
+ { Колич }
+     DelSpace(E^.Dat.TransportElement[i].Input.Kol);
+     ws:=E^.Dat.TransportElement[i].Input.Kol;
+     ws:='{'+ws+'}';
+     RFormat(ws,CKol+2);
+     s:=s+{' '}+ws;
+
+ { Цена }
+     ws:=E^.Dat.TransportElement[i].Input.Zena;
+     RFormat(ws,CZena);
+     s:=s+' '+ws;
+
+ { Итого сумма }
+     _Zena:=StrToReal(E^.Dat.TransportElement[i].Input.Zena);
+     _Kol:=StrToReal(E^.Dat.TransportElement[i].Input.Kol);
+     ws:=RealToStr(_Zena * _Kol,CIZena,CMantissa);
+     RFormat(ws,CIZena);
+     s:=s+' '+ws;
+ {Закупка}
+If (FindParam('/EZ') Or (StrToInt(CurrentPassword)=0)) Then
+ Begin
+     ws:=E^.Dat.TransportElement[i].Input.Zakupka;
+     RFormat(ws,CZenaZ);
+     s:=s+' '+ws;
+ End;
+
+ { Упаковок }
+     pp:=CalcPack(E^.Dat.TransportElement[i].BazKod,E^.Dat.TransportElement[i].Input.Kol);
+     DelSpace(Pp);
+     RFormat(Pp,CPack);
+     {s:=s+pp;}
+     If Not Video Then s:=Pitch[Nprint.Printer]+s+pp+
+	NoPitch[Nprint.Printer]
+     Else s:=s+pp;
+
+
+
+
+
+
+     If i<>E^.Dat.Amount Then
+     Writeln(txt,Space+Dop+St+Separator+s)
+     Else
+     Writeln(txt,Space+Dop+St+Separator+s);
+
+
+
+
+
+   {Str(StrToReal(E^.Dat.TransportElement[i].Input.Zakupka):CInputIZena:CMantissa,TempZakupka);}
+  End;{for i}
+
+If Not((FindParam('/EZ') Or (StrToInt(CurrentPassword)=0))) Then
+Begin
+   Writeln(txt,Space+Dop+'────────────────────────────────────────────────────────────────────────────');
+   Writeln(Txt,Space+Dop+'Всего позиций:',E^.Dat.Amount:2,'                   Всего по Р/Ц:   '
+   ,RecognizReal(StrToReal(E^.Dat.SummaZ),CIZena,CMAntissa)+' Мест:'+CalcTrMesto(E));
+End
+Else
+ Begin
+   Writeln(txt,Space+Dop+'──────────────────────────────────────────────────────────────────────────────────────-');
+   Writeln(Txt,Space+Dop+'Всего позиций:',E^.Dat.Amount:2,'                   Всего по Р/Ц:   '
+    ,RecognizReal(StrToReal(E^.Dat.SummaZ),CIZena,CMantissa)+'          Мест:'+CalcTrMesto(E));
+   Writeln(txt,Space+Dop+'                                   Всего по З/Ц:   ',RecognizReal(StrToReal(E^.Dat.SummaZakupka),
+   CIZena,CMantissa));
+ End;
+
+   Writeln(txt,Space+Dop+'  СДАЛ',REk.Otdel[E^.Dat.MakeOtdelenie]+':__________');
+   Writeln(txt);
+   Writeln(txt,Space+Dop+'ПРИНЯЛ',REk.Otdel[E^.Dat.ClientOtdelenie]+':__________');
+
+
+
+
+If Not Video Then NoInfoMsg;
+
+End;
+
+
+
+procedure PrintTransport(As: DocumentEdit);
+var txt: Text;
+    TF: TRansportFileType;
+    i,IORez: word;
+    pT: PTransportType;
+    T: TransportType;
+    sel: boolean;
+    space,dop:AllStr;
+Begin
+      space := '      ';
+      dop := '';
+
+{Ищем накладную}
+  Assign(TF,Path.ToRewisia+As.D+'.trn');
+  IORez:=ioresult;
+  Reset(TF);
+  IORez:=ioresult;
+  if IORez<>0 then
+    begin
+     MessageBox(^M+#3'Ошибка открытия файла '+Path.ToRewisia+As.D+'.trn'+
+     ^M+#3+'Код:'+IntToStr(IORez,3),nil,mfError+mfCancelButton);
+     Exit;
+    end;
+
+AInfo('Ищу документ...');
+
+  pT:=New(PTransportType,Init);
+
+  While not eof(TF) do
+   begin
+    sel:=false;
+    ReadTransport(TF,pT);
+    if (StrToInt(pT^.Dat.Document)=StrToInt(As.EditPosition)) And
+    (Pt^.Dat.DateC=As.D) And (pt^.Dat.Active) then
+      begin
+        {pT^.Dat:=T;}
+        sel:=True;
+        break;
+      end;
+   end;
+
+{Если найдена}
+if sel then
+Begin
+{Файл отчета}
+  Assign(txt,Path.ToTemp+'TrPrn.txt');
+  IORez:=ioresult;
+  Rewrite(txt);
+  IORez:=ioresult;
+  if IORez<>0 then
+    begin
+     Close(tf);
+     IORez:=ioresult;
+     Dispose(pT,Done);
+     NoInfo;
+     MessageBox(^M+#3'Ошибка создания файла '+Path.ToTemp+'TrPrn.txt'+
+     ^M+#3+'Код:'+IntToStr(IORez,3),nil,mfError+mfCancelButton);
+     Exit;
+    end;
+
+  IORez:=ioresult;
+  Close(TF);
+  IORez:=ioresult;
+
+{Формируем накладную}
+  Writeln(Txt,Space+{'Склад: ',GetClientField(FClient,pT^.Dat.SkladKod,1)pT^.Dat.Sklad+}'Оператор: '+pT^.Dat.Caption);
+  DelSpace(pt^.Dat.Document);
+    Writeln(txt,space+'   Н А К Л А Д Н А Я (внутреннее перемещение) N '
+             +pT^.Dat.Document+'/'+IntToStr(StrToInt(pT^.Dat.SkladKod),COne)++' от '+pT^.Dat.DateC+' ('+pT^.Dat.TimeC+')');
+
+  FormTrNakl(pT,txt,False);
+
+{Печатаем накладную}
+  Writeln(Txt,Space);
+  Writeln(Txt,Space+'"'+DayString[DayOfWeek(ToDay)]+'" '+TodayString(DateMask)+'('+Times+')');
+If Not((FindParam('/EZ') Or (StrToInt(CurrentPassword)=0))) Then
+  Writeln(txt,Space+'============================================================================')
+Else
+  Writeln(txt,Space+'=======================================================================================');
+  IORez:=ioresult;
+  Close(txt);
+  IORez:=ioresult;
+  NoInfo;
+  If MessageBox(^M+#3+'Печатать внутреннее перемещение N '+pT^.Dat.Document+' от '+pT^.Dat.DateC+'?',nil,
+  mfConfirmation+mfOkCancel)=cmOK Then
+  report(Path.ToTemp+'TrPrn.txt','',1,False,False,false);
+End {if sel}
+Else
+ begin
+  IORez:=ioresult;
+  Close(TF);
+  IORez:=ioresult;
+  NoInfo;
+  MessageBox(#3^M+#3'Документ N '+ As.EditPosition+' в базе за '+As.D+' не найден!',Nil,mfError+mfCancelButton);
+ end;
+
+Dispose(pT,Done);
+
+End;
+
+
+procedure ViewTransport(Date: TDateString);
+
+var TF: TRansportFileType;
+    i,IORez: word;
+    pT: PTransportType;
+    T: TransportType;
+    txt: text;
+    nn:word;
+    itZena,itZakupka:string[150];
+    Space,Dop: AllStr;
+Begin
+      space[0] := #0;
+      dop[0] :=#0;
+
+
+ Assign(txt,Path.ToTemp+'TrPrn.txt');
+  IORez:=ioresult;
+  Rewrite(txt);
+  IORez:=ioresult;
+  if IORez<>0 then
+    begin
+     MessageBox(^M+#3'Ошибка создания файла '+Path.ToTemp+'TrPrn.txt'+
+     ^M+#3+'Код:'+IntToStr(IORez,3),nil,mfError+mfCancelButton);
+     Exit;
+    end;
+
+ Assign(TF,Path.ToRewisia+Date+'.trn');
+  IORez:=ioresult;
+  Reset(TF);
+  IORez:=ioresult;
+  if IORez<>0 then
+    begin
+     Close(txt);
+     MessageBox(^M+#3'Ошибка открытия файла '+Path.ToRewisia+Date+'.trn'+
+     ^M+#3+'Код:'+IntToStr(IORez,3),nil,mfError+mfCancelButton);
+     Exit;
+    end;
+
+   AInfo('Минуточку...');
+   itZena:='0.00';
+   itZakupka:='0.00';
+   nn:=0;
+
+ pT:=New(PTransportType,Init);
+
+
+   While not eof(TF) do
+   begin
+    ReadTransport(TF,pT);
+    Writeln(Txt,Space+'Склад: ',GetMakeField(FClient,pT^.Dat.SkladKod,1)+' Оператор: '+pT^.Dat.Caption+' EYE & 1997-00');
+    Writeln(txt,space+'  Н А К Л А Д Н А Я (внутреннее перемещение) N '
+             +pT^.Dat.Document+'/'+IntToStr(StrToInt(pT^.Dat.SkladKod),COne)+' от '+pT^.Dat.DateC+' ('+pT^.Dat.TimeC+')');
+
+    MyStr((StrToReal(itZena)+StrToReal(pt^.Dat.SummaZ)),CIZena,CMantissa,itZena);
+    format(itZena,CIZena);
+    MyStr((StrToReal(itZakupka)+StrToReal(pt^.Dat.SummaZakupka)),CIZena,CMantissa,itZakupka);
+    format(itZakupka,CIZena);
+    inc(nn);
+    FormTrNakl(pT,txt,True);
+    {Writeln(txt);}
+If Not((FindParam('/EZ') )) Then
+  Writeln(txt,Space+'============================================================================')
+Else
+  Writeln(txt,Space+'=======================================================================================');
+
+   end;
+ Writeln(txt);
+ Writeln(txt,space+' Всего по Р/Ц: ',recognizReal(StrToREal(itZena),CIZena,CMAntissa));
+
+If ((FindParam('/EZ') Or (StrToInt(CurrentPassword)=0))) Then
+ Writeln(txt,space+' Всего по З/Ц: ',recognizReal(StrToREal(itZakupka),CIZena,CMAntissa));
+
+ Writeln(txt,space+' Всего документов: ',nn:CKol);
+
+
+ IORez:=ioresult;
+ Close(TF);
+ IORez:=ioresult;
+ Close(txt);
+ IORez:=ioresult;
+ Dispose(pT,Done);
+
+ NoInfo;
+
+ ViewAsText(Path.ToTemp+'TrPrn.txt',False);
+
+End;
+
+BEGIN
+END.

@@ -1,0 +1,1661 @@
+{$IfNDEF DPMI}
+
+{$F+}
+{$O+}
+
+{$EndIf}
+
+{$I Compile.INC}
+
+Unit ReestrR;
+
+Interface
+
+
+Uses Dialogs,Drivers,Access,ServStr,Glob;
+
+Type
+  PReestrRewWindow = ^TReestrRewWindow;
+  TReestrRewWindow = object(TDialog)
+    constructor Init(Var l: Boolean);
+    procedure OpenReestrRewWindow;
+    procedure FullPreview;
+    procedure HandleEvent(var Event: TEvent); virtual;
+    Procedure FormRep(Const p:PBox);
+    procedure Refresh;
+    procedure SortString;
+    Function  LocateList(P:PBox;s:AllStr):LongInt;
+    procedure FreshRewisiaHint;
+  end;
+
+
+Implementation
+
+uses DBEngine,Objects, Views, MsgBox,TpDate,Vision3,Protect,Utils,UtilsP,
+     App, ColorTxt,Serv,NetDbEng,Net,Tools,Printers,Prise,Slava3;
+
+
+var
+ DocList,NoScreen : PBox;
+ ControlDirection,ControlComment1,
+ ControlStatus,Control,ControlSort,ControlAllDoc,ControlAllSumma,ControlAllPrihod,
+ ControlAllRashod,ControlComment,ControlStart,ControlStop: PView;
+ PrevCur : String;
+ DocReestrRWindow: PReestrRewWindow;
+ StartDate,StopDAte,DocDate : TDateString;
+ Direction,Status ,Sorting : Word;
+ StartTime:LongInt;
+ Start,Stop:LongInt;
+ AllDoc,AllPrihod,AllRashod,AllSumma : String[CIZena];
+ FiltrMas : Maska100;
+ FiltrBox : PBox;
+
+
+
+
+
+function SelectSpisanie : Word;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c,REs: Word;
+begin
+Res:=5;
+R.Assign(24, 8, 55, 16);
+New(Dlg, Init(R, 'Списания'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 1, 30, 7);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('На нужды офиса',
+  NewSItem('На нужды склада',
+  NewSItem('На нужды торгового зала',
+  NewSItem('Другое',
+  NewSItem('На нужды отдела доставки',{39}
+  NewSItem('все', Nil))))))));
+Dlg^.Insert(Control);
+Dlg^.SetDAta(Res);
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+Dlg^.GetDAta(Res);
+
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+If Res=5 Then Res:=5;
+
+If c=CmCancel Then Res:=7;
+SelectSpisanie:=Res;
+end;
+
+
+function SelectBrak: Word;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c,REs:Word;
+
+begin
+Res:=11{6};
+R.Assign(24, 7, 55, 22);
+New(Dlg, Init(R, 'Брак'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 1, 30, 14);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Склада',
+  NewSItem('отделение 2',
+  NewSItem('персональный',
+  NewSItem('поставщика',
+  NewSItem('операторов',
+  NewSItem('другое',
+  NewSItem('отделение 3',{31}
+  NewSItem('отделение 5',{32}
+  NewSItem('отделение 6',{33}
+  NewSItem('отделение 7',{34}
+  NewSItem('отделение 8',{35}
+  NewSItem('все', Nil))))))))))))));
+Dlg^.Insert(Control);
+Dlg^.SetDAta(Res);
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+Dlg^.GetDAta(Res);
+
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+If Res=11 Then Res:=11;
+
+If c=CmCancel Then Res:=12;
+SelectBrak:=Res;
+end;
+
+
+function SelectNedovoz : Word;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c,REs:Word;
+
+begin
+Res:=5;
+R.Assign(24, 8, 55, 17);
+New(Dlg, Init(R, 'Недовозы'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 1, 30, 8);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Экспедиторов',
+  NewSItem('Торговых представителей',
+  NewSItem('Общий экспедиторов',
+  NewSItem('Другое',
+  NewSItem('Витрины',{40}
+  NewSItem('все', Nil))))))));
+Dlg^.Insert(Control);
+
+Dlg^.SetDAta(Res);
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+Dlg^.GetDAta(Res);
+
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+If Res=5 Then Res:=5;
+
+If c=CmCancel Then Res:=7;
+SelectNedovoz:=Res;
+end;
+
+
+function SelectRewisia : Word;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c,REs:Word;
+
+begin
+Res:=9;
+R.Assign(24, 8, 55, 22);
+New(Dlg, Init(R, 'Ревизия на складе'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 1, 30, 13);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Пересортица',
+  NewSItem('Явные плюсы',
+  NewSItem('Явные минусы',
+  NewSItem('Другое',
+  NewSItem('Пересортица3',{27}
+  NewSItem('Пересортица5',{30}
+  NewSItem('Пересортица6',{36}
+  NewSItem('Пересортица7',{37}
+  NewSItem('Пересортица8',{38}
+  NewSItem('Все', Nil))))))))))));
+Dlg^.Insert(Control);
+Dlg^.SetDAta(Res);
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+Dlg^.GetDAta(Res);
+
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+If Res=9 Then Res:=9;
+
+If c=CmCancel Then Res:=10;
+SelectRewisia:=Res;
+end;
+
+
+function SelectPerenos: Word;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c,REs:Word;
+
+begin
+Res:=4;
+R.Assign(24, 8, 56, 15);
+New(Dlg, Init(R, 'Перенос позиций'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 1, 31, 6);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Из раздела в раздел',
+  NewSItem('Из позиции в позицию',
+  NewSItem('Из отделения в отделение',
+  NewSItem('Другое',
+  NewSItem('Все', Nil)))))));
+Dlg^.Insert(Control);
+Dlg^.SetDAta(Res);
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+Dlg^.GetDAta(Res);
+
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+If Res=4 Then Res:=8;
+
+If c=CmCancel Then Res:=7;
+SelectPerenos:=Res;
+end;
+
+
+function SelectError : Word;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+  REs : Word;
+
+begin
+Res:=3;
+R.Assign(27, 8, 52, 14);
+New(Dlg, Init(R, 'Ошибки'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+
+R.Assign(1, 1, 24, 5);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Прихода',
+  NewSItem('Ревизии',
+  NewSItem('Прочие ошибки',
+  NewSItem('Все', Nil))))));
+Dlg^.Insert(Control);
+Dlg^.SetDAta(Res);
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+Dlg^.GetDAta(Res);
+
+Dispose(Control,Done);
+Dispose(Dlg,Done);
+
+If Res=3 Then Res:=8;
+If c=CmCancel Then Res:=7;
+SelectError:=Res;
+end;
+
+
+
+
+
+
+
+function Sasha(VAr Vid,PodVid:Word{при крупном};
+               Var MMM:MAska100;Var P:PBox):Boolean;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  c : Word;
+  REgim : Word;
+  CCC : Word;
+  s : String;
+begin
+Sasha:=FAlse;
+
+ccc:=SelectImport(25);
+If ccc=2 Then Exit;
+
+If ccc=1 Then
+ begin
+  If SelectionGroup(P) Then
+   Begin
+    For c:=1 To Max100 Do MMM[c]:=0;
+
+    If (P^.List^.Count>=1) Then
+    For c:=0 To P^.List^.Count-1 Do
+     Begin
+      s:=P^.GetText(c,P^.List^.Count);
+
+      Writeln(s);
+      s:=Copy(s,1+CNAme+1,CClientKod);
+      MMM[StrToInt(s)]:=1;
+     End;
+    Sasha:=True;
+   End;
+  Exit;
+ end;
+
+
+R.Assign(27, 7, 53, 16);
+New(Dlg, Init(R, 'Уточните'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+Dlg^.HelpCtx := $E002;
+Regim:=0;
+
+For c:=1 To Max100 Do MMM[c]:=0;
+
+R.Assign(1, 1, 25, 8);
+Control := New(PRadioButtons, Init(R,
+  NewSItem('Списания',
+  NewSItem('Брак',
+  NewSItem('Недовозы',
+  NewSItem('Ревизия на складе',
+  NewSItem('Перенос позиций',
+  NewSItem('Ошибки',
+  NewSItem('Все', Nil)))))))));
+Dlg^.Insert(Control);
+
+Dlg^.GetDAta(Regim);
+
+Dlg^.SelectNext(False);
+
+c:=Desktop^.ExecView(Dlg);
+
+Dlg^.GetDAta(Regim);
+
+  Dispose(Control,Done);
+  Dispose(Dlg,Done);
+
+If c=CmCAncel Then
+ Begin
+  Regim:=7;
+  Exit;
+ End;
+
+Vid:=Regim;
+
+CAse Vid Of
+ 0:Begin
+    PodVid:=SelectSpisanie;
+    If PodVid=7 Then Exit;
+
+    If PodVid=5 Then
+     Begin
+      MMM[1]:=1;
+      MMM[2]:=1;
+      MMM[3]:=1;
+      MMM[4]:=1;
+      MMM[39]:=1;
+      Sasha:=True;
+      Exit;
+     End;
+
+    Sasha:=True;
+    Case PodVid Of
+    0:MMM[1]:=1;
+    1:MMM[2]:=1;
+    2:MMM[3]:=1;
+    3:MMM[4]:=1;
+    4:MMM[39]:=1;
+    Else;
+    End;
+    Exit;
+   End;
+ 1:Begin
+    PodVid:=SelectBrak;
+    If PodVid=12 Then Exit;
+
+    If PodVid=11 Then
+     Begin
+      MMM[5]:=1;
+      MMM[6]:=1;
+      MMM[7]:=1;
+      MMM[8]:=1;
+      MMM[9]:=1;
+      MMM[10]:=1;
+      MMM[31]:=1;
+      MMM[32]:=1;
+      MMM[33]:=1;
+      MMM[34]:=1;
+      MMM[35]:=1;
+      Sasha:=True;
+      Exit;
+     End;
+
+    Sasha:=True;
+    Case PodVid Of
+    0:MMM[5]:=1;
+    1:MMM[6]:=1;
+    2:MMM[7]:=1;
+    3:MMM[8]:=1;
+    4:MMM[9]:=1;
+    5:MMM[10]:=1;
+    6:MMM[31]:=1;
+    7:MMM[32]:=1;
+    8:MMM[33]:=1;
+    9:MMM[34]:=1;
+   10:MMM[35]:=1;
+
+    Else;
+    End;
+    Exit;
+
+
+
+   End;
+ 2:Begin
+    PodVid:=SelectNedovoz;
+    If PodVid=7 Then Exit;
+
+    If PodVid=5 Then
+     Begin
+      MMM[11]:=1;
+      MMM[12]:=1;
+      MMM[13]:=1;
+      MMM[14]:=1;
+      MMM[40]:=1;
+      Sasha:=True;
+      Exit;
+     End;
+
+    Sasha:=True;
+    Case PodVid Of
+    0:MMM[11]:=1;
+    1:MMM[12]:=1;
+    2:MMM[13]:=1;
+    3:MMM[14]:=1;
+    4:MMM[40]:=1;
+    Else;
+    End;
+    Exit;
+
+   End;
+ 3:Begin
+    PodVid:=SelectRewisia;
+    If PodVid=10 Then Exit;
+
+    If PodVid=9 Then
+     Begin
+      MMM[15]:=1;
+      MMM[16]:=1;
+      MMM[17]:=1;
+      MMM[18]:=1;
+      MMM[27]:=1;
+      MMM[30]:=1;
+      MMM[36]:=1;
+      MMM[37]:=1;
+      MMM[38]:=1;
+      Sasha:=True;
+      Exit;
+     End;
+
+    Sasha:=True;
+    Case PodVid Of
+    0:MMM[15]:=1;
+    1:MMM[16]:=1;
+    2:MMM[17]:=1;
+    3:MMM[18]:=1;
+    4:MMM[27]:=1;
+    5:MMM[30]:=1;
+    6:MMM[36]:=1;
+    7:MMM[37]:=1;
+    8:MMM[38]:=1;
+    Else;
+    End;
+    Exit;
+
+
+
+   End;
+ 4:Begin
+    PodVid:=SelectPerenos;
+    If PodVid=7 Then Exit;
+
+    If PodVid=8 Then
+     Begin
+      MMM[19]:=1;
+      MMM[20]:=1;
+      MMM[21]:=1;
+      MMM[22]:=1;
+      Sasha:=True;
+      Exit;
+     End;
+
+    Sasha:=True;
+    Case PodVid Of
+    0:MMM[19]:=1;
+    1:MMM[20]:=1;
+    2:MMM[21]:=1;
+    3:MMM[22]:=1;
+    Else;
+    End;
+    Exit;
+
+
+
+   End;
+ 5:Begin
+    PodVid:=SelectError;
+    If PodVid=7 Then Exit;
+
+    If PodVid=8 Then
+     Begin
+      MMM[23]:=1;
+      MMM[24]:=1;
+      MMM[25]:=1;
+      MMM[26]:=1;
+      Sasha:=True;
+      Exit;
+     End;
+
+    Sasha:=True;
+    Case PodVid Of
+    0:MMM[23]:=1;
+    1:MMM[24]:=1;
+    2:MMM[25]:=1;
+    3:MMM[26]:=1;
+    Else;
+    End;
+    Exit;
+
+   End;
+ 6:Begin
+    Sasha:=True;
+    For c:=1 To Max100 Do MMM[c]:=1;
+   End;
+ Else;
+ End;
+
+end;
+
+
+
+procedure TReestrRewWindow.OpenReestrRewWindow;
+Var l : Boolean;
+begin
+StartDate:=FDate;
+StopDate:=FDate;
+  if Message(Desktop, evBroadcast, cmReestrRwz, nil) = nil then
+  begin
+    L:=True;
+    If Not(DatePeriodDialog(StartDAte,StopDate,False)) Then Exit;
+   start:=DateStringToDate(DAtemask,StartDate);
+   stop:=DateStringToDate(DAtemask,StopDate);
+
+    DInfo('Инициализация реестра актов ревизии ...');
+    DocReestrRWindow := New(PReestrRewWindow, Init(L));
+    If L Then
+    Begin
+    Application^.InsertWindow(DocReestrRWindow);
+    NoInfo;
+    End
+    Else
+     Begin
+      TekDate:=FDate;
+      Dispose(DocReestrRWindow,Done);
+      NoInfo;
+     End;
+  end
+  else
+    if PView(DocReestrRWindow) <> Desktop^.TopView then DocReestrRWindow^.Select;
+end;
+
+
+
+
+
+procedure TReestrRewWindow.FreshRewisiaHint;
+Var ws,s : String;
+    R : TRect;
+begin
+If DocList^.List^.Count>0 Then
+Begin
+s:=DocList^.GetText(DocList^.Focused,DocList^.List^.Count);
+ws:=s;
+s:=Copy(s,1+1+CDocnumer+1+CDAte+1+CIZena+1+CIZena+1+CIZena+1+CKto+1+2+1,CSertif);
+DelSpaceRight(s);
+Dispose(ControlComment,Done);
+R.Assign(12, 21, 79, 22);
+ControlComment := New(PColoredText, Init(R, #3+s, $7E));
+Insert(ControlComment);
+
+
+s:=ws;
+s:=Copy(s,1+1+CDocnumer+1+CDAte+1+CIZena+1+CIZena+1+CIZena+1+CKto+1,2);
+If s='Ok' Then
+ Begin
+  s:=copy(ws,1+1+CDocnumer+1+CDAte+1+CIZena+1+CIZena+1+CIZena+1+CKto+1+2+1+CSertif+1,CKto+1+CDate+1+CDate);
+ End
+Else
+  s[0]:=#0;
+
+Dispose(ControlComment1,Done);
+R.Assign(21, 20, 56, 21);
+ControlComment1 := New(PColoredText, Init(R, s, $7E));
+Insert(ControlComment1);
+End;
+PrevCur:=ws;
+end;
+
+
+
+
+
+
+
+
+constructor TReestrRewWindow.Init(Var l : Boolean);
+var
+  R : TRect;
+  Control : PView;
+  C : Word;
+  s: TMyString;
+  ws : AllStr;
+  Cur:LongInt;
+begin
+
+L:=False;
+
+R.Assign(0, 0, 80, 23);
+inherited Init(R, 'Реестр ревизий на складе');
+Options := Options or ofCenterX or ofCenterY;
+HelpCtx:=$F066;
+
+R.Assign(0,0,0,0);
+NoScreen := New(PBox, Init(R, 1, Nil));
+NoScreen^.NewList(New(PTextCollection, Init(0,1)));
+
+
+R.Assign(0,0,0,0);
+FiltrBox := New(PBox, Init(R, 1, Nil));
+FiltrBox^.NewList(New(PTextCollection, Init(0,1)));
+
+
+AllDoc[0]:=#0;
+AllSumma[0]:=#0;
+AllPrihod[0]:=#0;
+AllRashod[0]:=#0;
+
+For c:=1 To Max100 Do
+ BEgin
+  FiltrMas[c]:=1;
+ End;
+
+
+
+
+R.Assign(1, 1, 60, 2);
+ControlSort := New(PRadioButtons, Init(R,
+  NewSItem('~Д~ата',
+  NewSItem('В~с~его',
+  NewSItem('Расх~о~д',
+  NewSItem('~П~риход',
+  NewSItem('Опера~т~ор', Nil)))))));
+Sorting:=0;
+ControlSort^.SetData(Sorting);
+Insert(ControlSort);
+
+  R.Assign(1, 0, 14, 1);
+  Insert(New(PLabel, Init(R, 'Сортировать:', ControlSort)));
+
+R.Assign(65, 1, 79, 2);
+ControlDirection := New(PRadioButtons, Init(R,
+  NewSItem(#30,
+  NewSItem(#31, Nil))));
+Direction:=0;
+ControlDirection^.SetData(Direction);
+Insert(ControlDirection);
+
+  R.Assign(65, 0, 78, 1);
+  Insert(New(PLabel, Init(R, 'Направление:', ControlDirection)));
+
+{
+R.Assign(9, 2, 46, 3);
+ControlStatus := New(PCheckboxes, Init(R,
+  NewSItem('Про~в~еренные',
+  NewSItem('~Н~е проверенные', Nil))));
+Status:=3;
+ControlStatus^.SetData(Status);
+Insert(ControlStatus);
+
+  R.Assign(1, 2, 9, 3);
+  Insert(New(PLabel, Init(R, 'Статус:', ControlStatus)));
+}
+R.Assign(1, 21, 12, 22);
+Control := New(PColoredText, Init(R, 'Примечание:', $74));
+Insert(Control);
+
+R.Assign(12, 21, 79, 22);
+ControlComment := New(PColoredText, Init(R, #3+'', $7E));
+Insert(ControlComment);
+
+R.Assign(1, 20, 21, 21);
+Control := New(PColoredText, Init(R, 'Подписан оператором:', $74));
+Insert(Control);
+
+R.Assign(21, 20, 56, 21);
+ControlComment1 := New(PColoredText, Init(R, #3+'', $7E));
+Insert(ControlComment1);
+
+PrevCur[0]:=#0;
+
+{
+Start:=(DateStringToDate(DateMask,FDate)-30);
+}
+
+
+R.Assign(57, 2, 65, 3);
+ControlStart := New(PColoredText, Init(R, #3+StartDAte{DateToDateString(DateMask,Start)}, $7E));
+Insert(ControlStart);
+
+R.Assign(70, 2, 78, 3);
+ControlStop := New(PColoredText, Init(R, #3+StopDate{FDate}, $7E));
+Insert(ControlStop);
+
+R.Assign(47, 2, 56, 3);
+Control := New(PColoredText, Init(R, 'Период с:', $74));
+Insert(Control);
+
+
+R.Assign(66, 2, 69, 3);
+Control := New(PColoredText, Init(R, 'по:', $74));
+Insert(Control);
+
+
+R.Assign(79, 4, 80, 20);
+Control := New(PScrollBar, Init(R));
+Insert(Control);
+
+R.Assign(0, 4, 79, 20);
+DoCList := New(PBox, Init(R, 1, PScrollBar(Control)));
+DoCList^.NewList(New(PMyCollection, Init(1,1)));
+DocList^.HelpCtx:=$F066;
+
+DocList^.FocusItem(0);
+Insert(DocList);
+
+Str(StrToReal(AllSumma):CIZena:CMantissa,AllSumma);
+DelSpace(AllSumma);
+
+Str(StrToReal(AllPrihod):CIZena:CMantissa,AllPrihod);
+DelSpace(AllPrihod);
+
+Str(StrToReal(AllRashod):CIZena:CMantissa,AllRashod);
+DelSpace(AllRashod);
+
+Str(StrToInt(AllDoc):CLitrMantissa+1,AllDoc);
+DelSpace(AllDoc);
+
+  R.Assign(1, 3, 79, 4);
+  Insert(New(PLabel, Init(R,'Док.   Дата    Всего ревизия       Приход         Расход        Оператор  Прв', DocList)));
+
+R.Assign(64, 22, 79, 23);
+ControlAllSumma := New(PColoredText, Init(R, #3+AllSumma, $4E));
+Insert(ControlAllSumma);
+
+R.Assign(11, 22, 26, 23);
+ControlAllRashod := New(PColoredText, Init(R, #3+AllRashod, $4E));
+Insert(ControlAllRashod);
+
+R.Assign(36, 22, 51, 23);
+ControlAllPrihod := New(PColoredText, Init(R, #3+AllPrihod, $4E));
+Insert(ControlAllPrihod);
+
+R.Assign(53, 22, 57, 23);
+ControlAllDoc := New(PColoredText, Init(R, #3+AllDoc, $4E));
+Insert(ControlAllDoc);
+
+R.Assign(57, 22, 64, 23);
+Control := New(PColoredText, Init(R, ' Всего:', $74));
+Insert(Control);
+
+R.Assign(1, 22, 11, 23);
+Control := New(PColoredText, Init(R, ' E Приход:', $74));
+Insert(Control);
+
+R.Assign(26, 22, 36, 23);
+Control := New(PColoredText, Init(R, ' E Расход:', $74));
+Insert(Control);
+
+
+
+SelectNext(False);
+SelectNext(False);
+SelectNext(False);
+
+L:=True;
+PrevCur[0]:=#0;
+Refresh;
+SortString;
+Redraw;
+end;
+
+
+
+
+
+Procedure TReestrRewWindow.HandleEvent(var Event: TEvent);
+Var test : Word;
+    s,s1 : String;
+    SDoc : ArtikulStr;
+    SDate: TDateString;
+    l : Boolean;
+    FC:Byte;
+    FS : AllStr;
+    Vid,PodVid : Word;
+    MMM : Maska100;
+
+begin
+
+  Case Event.What Of
+  evKeyDown :
+  Case Event.KeyCode Of
+     kbF7 :Begin
+            MMM:=FiltrMas;
+            If Sasha(Vid,PodVid,MMM,FiltrBox) Then
+            Begin
+             FiltrMas:=MMM;
+             ClearFind;
+             ClearEvent(Event);
+             Refresh;
+             SortString;
+             Redraw;
+            End
+            Else
+
+           End;
+     kbEsc: Begin
+              ClearFind;
+              Event.What:=evCommand;
+              Event.Command:=cmCancel;
+              PutEvent(Event);
+              ClearEvent(Event);
+            End;
+      Else;
+      End;{KeyDown}
+  evCommand :
+     Case Event.Command Of
+
+    cmAbout: Begin
+    AboutCHM('60');
+    ClearEvent(Event);
+    End;
+
+  cmPrintReestr: if (User[89] or (CurrentPassword='00')) then
+    Begin
+                 ClearFind;
+     If (DocList^.State and sfFocused <> 0) And (DocList^.List<>Nil)And(DocList^.List^.Count>=1) Then
+            Begin
+                Assistent.EditPosition:=Copy(DocList^.GetText(DocList^.Focused,DocList^.List^.Count),1+1,CDocNumer);
+                DelSpace(Assistent.EditPosition);
+                DelZerro(Assistent.EditPosition);
+                Assistent.D:=Copy(DocList^.GetText(DocList^.Focused,DocList^.List^.Count),1+1+CDocNumer+1,CDate);
+                DelSpace(Assistent.D);
+                If MessageBox(^M+#3'Печатать акт ревизии N '+Assistent.EditPosition+' от '+Assistent.D+'?',Nil,
+			 mfConfirmation+mfOKCancel)=cmOk Then
+                PrintRewisia(Assistent);
+            End
+            End;
+ cmReestrReport: if (User[88] or (CurrentPassword='00')) then
+    Begin
+                 ClearFind;
+     If (DocList^.List<>Nil)And(DocList^.List^.Count>=1) Then
+            Begin
+             FormRep(DocList);
+            End
+            End;
+  cmFullView:    Begin
+                 ClearFind;
+     If (DocList^.State and sfFocused <> 0) And (DocList^.List<>Nil)And(DocList^.List^.Count>=1) Then
+            Begin
+              FullPreview;
+            End
+            End;
+        cmChangeDiapason: Begin
+                           ClearFind;
+    If (DatePeriodDialog(StartDAte,StopDate,False)) Then
+     Begin
+      start:=DateStringToDate(DAtemask,StartDate);
+      stop:=DateStringToDate(DAtemask,StopDate);
+      Refresh;
+      SortString;
+      Redraw;
+     End;
+                          ClearEvent(Event);
+                          End;
+     cmReestrRwz:Begin
+                  ClearFind;
+                  ClearEvent(Event);
+                 End;
+     cmRefresh  :Begin
+                  ClearFind;
+                  ClearEvent(Event);
+                  Refresh;
+                  SortString;
+                  Redraw;
+                 End;
+     cmCancel : Begin
+                 Dispose(NoScreen,Done);
+                 {Dispose(DocList,Done);}
+                 ClearFind;
+                 Event.What:=evCommand;
+                 Event.Command:=cmClose;
+                 PutEvent(Event);
+                 ClearEvent(Event);
+                End;
+      Else;
+      End;{evCommand}
+      Else;
+      End;{*Case*}
+  if (Event.What = evBroadcast) and
+    (Event.Command = cmReestrRwz) then ClearEvent(Event);
+
+  if (Event.What = evBroadcast) and
+    (Event.Command = cmQuit) then ClearEvent(Event);
+
+
+  inherited HandleEvent(Event);
+
+
+  If (Desktop^.Current=PView(DocReestrRWindow)) And (Event.What <> EvKeyDown) Then
+             Begin
+
+              if (DocList^.State and sfFocused <> 0)  And(DocList^.List<>Nil) And (DocList^.List^.Count>=1)Then
+              Begin
+               s:=DocList^.GetText(DocList^.Focused,DocList^.List^.Count);
+               If s <> PrevCur Then
+                 Begin
+                 FreshRewisiaHint;
+                 Redraw;
+                 End
+              End;
+
+(*
+                if (ControlStatus^.State and sfFocused <> 0)Then
+                    Begin
+                        ControlStatus^.GetData(Test);
+                        If Test <> Status Then
+                        Begin
+                           ClearFind;
+                           Status:=Test;
+                           {Refresh;}
+                           SortString;
+                           Redraw;
+                        End;
+                    End;
+*)
+                if (ControlSort^.State and sfFocused <> 0)Then
+                    Begin
+                        ControlSort^.GetData(Test);
+                        If Test <> Sorting Then
+                        Begin
+                           ClearFind;
+                           Sorting:=Test;
+                           SortString;
+                           Redraw;
+                        End;
+                    End;
+
+                if (ControlDirection^.State and sfFocused <> 0)Then
+                    Begin
+                        ControlDirection^.GetData(Test);
+                        If Test <> Direction Then
+                        Begin
+                           ClearFind;
+                           Direction:=Test;
+                           SortString;
+                           Redraw;
+                        End;
+                    End;
+             End;
+end;
+
+
+
+Procedure TReestrRewWindow.FormRep(Const P:PBox);
+Const Space='        ';
+Var f : text;
+    s2,Skidka,Summa,ws,s,s1 : String;
+    i,c,k : Word;
+    mSorting: Maska5;
+    {mStatus : Maska2;}
+    tt : Real;
+    TempStr,Datestr:DateString;
+    LocR,LocP,LocI:Real;
+    LocDoc:LongInt;
+    PrintItog,PrintDate : Boolean;
+    Vid : Word;
+    A : DocumentEdit;
+Begin
+Vid:=SelectImport(26);
+If Vid=2 Then Exit;
+
+DInfoMsg('Формирую отчет...');
+
+If (P^.List<>Nil) And (P^.List^.Count>=1) Then
+ Begin
+ Assign (f,Path.ToTemp+'listr.txt');
+ c:=0;
+ Rewrite(f);
+ c:=IOResult;
+ If c<>0 Then
+  Begin
+   NoInfoMsg;
+   MessageBox(#3^m+#3+'Не могу создать файл '+Path.ToTemp+'listr.txt',Nil,mfError+mfCancelButton);
+   Exit;
+  End;
+
+{ControlStatus^.GetData(Status);}
+ControlSort^.GetData(Sorting);
+{
+WordToBit2(STatus,mStatus);
+Convert2(mStatus);
+}
+ Writeln(f,Space+'Склад: ',GetClientField(FClient,Rek.Kod,1)+'  Оператор: '+CurrentPassword+' EYE & 1999');
+
+ Write(f,Space+'Сортировка:');
+ Case Sorting Of
+ 0:Writeln(f,'{Дата}');
+ 1:Writeln(f,'{Сумма итого}');
+ 2:Writeln(f,'{Расход}');
+ 3:Writeln(f,'{Приход}');
+ 4:Writeln(f,'{Оператор}');
+ Else;
+ End;
+
+ Write(f,Space+'Направление:');
+ Case Direction Of
+ 0:Writeln(f,'{По возрастанию}');
+ 1:Writeln(f,'{По убыванию}');
+ Else;
+ End;
+
+(*
+ Write(f,Space+'Статус ревизии:');
+ For i:=1 To 2 Do
+ Case i Of
+ 1: If Mstatus[i]=1 Then Write(f,'{Подписанные ') Else Write(f,'{');
+ 2: If Mstatus[i]=1 Then Write(f,' Не подписанные}') Else Write(f,'}');
+ Else;
+ End;
+ Writeln(f);
+*)
+
+
+ Writeln(f,Space+'     РЕЕСТР ДОКУМЕНТОВ РЕВИЗИИ ТОВАРА НА СКЛАДЕ  с '+StartDate+' по '+StopDate);
+ Writeln(f,Space+'-----------------------------------------------------------------------------');
+ Writeln(f,Space+'Док.   Дата     Итого ревизия          Приход          Расход    Оператор Прв');
+                 {1234│12345678│123456789012345│123456789012345│123456789012345│123456789012│12}
+ Writeln(f,Space+'-----------------------------------------------------------------------------');
+
+If (P^.List^.Count-1)>=0 Then
+ Begin
+
+ s := P^.GetText(0,P^.List^.Count);
+
+ DateStr:=Copy(s,1+1+CDocNumer+1,CDate);
+ LocI:=0;
+ LocDoc:=0;
+ Writeln(f,Space+'Дата: '+DateStr);
+
+
+
+ For c:=0 To P^.List^.Count-1 Do
+  Begin
+   PrintItog:=False;
+   PrintDate:=False;
+   s := P^.GetText(c,P^.List^.Count);
+
+ A.EditPosition:=Copy(s,1+1,CDocNumer);
+ DelSpace(A.EditPosition);
+ DelZerro(A.EditPosition);
+ A.D:=Copy(s,1+1+CDocNumer+1,CDate);
+ DelSpace(A.D);
+
+
+   While Pos('│',s)>0 Do
+    Begin
+     k:=Pos('│',s);
+     System.Delete(s,k,1);
+     System.Insert(' ',s,k);
+    End;
+
+   System.Delete(s,1,1);
+   s1:=Copy(s,1+CDocnumer+1+CDAte+1+CIZena+1+CIZena+1+CIZena+1+CKto+1+2+1,CSertif);
+   s2:=Copy(s,1+CDocnumer+1+CDAte+1+CIZena+1+CIZena+1+CIZena+1+CKto+1+2+1+CSertif+1,CMantissa);
+
+
+   s[0]:=Chr(CDocNumer+1+CDate+1+CIZena+1+CIZena+1+CIZena+1+CKto+1+2);
+   Writeln(f,Space+s);
+   DelSpaceRight(s1);
+
+   Writeln(f,Space+'Вид ревизии: '+GetRewGroupField(FName,IntToStr(StrToInt(s2),CKol)));
+
+   If S1[0]<>#0 Then
+   Begin
+     Writeln(f,Space+'Примечание: '+s1);
+   End;
+
+   s:=Copy(s,1+CDocNumer+1+CDate+1,CIZena);
+   LocI:=LocI+StrToReal(s);
+   Inc(LocDoc);
+
+   If Vid=0 Then
+    Begin
+     AddToReportRewisia(A,Space,f);
+    End;
+
+   If c<P^.List^.Count-1 Then
+    Begin
+     ws := P^.GetText(c+1,P^.List^.Count);
+     TempStr:=Copy(ws,1+1+CDocNumer+1,CDate);
+     If TempStr<>DateStr Then
+      Begin
+       {DateStr:=TempStr;}
+       PrintDate:=True;
+       PrintItog:=True;
+      End;
+    End
+    Else PrintItog:=True;
+
+ If PrintItog Then
+ Begin
+ Writeln(f,Space,'------------- Всего за:'+DateStr+' ',RecognizReal(LocI,CIZena,CMantissa),
+ '   документов: ',LocDoc:3,' -----------');
+ DateStr:=TempStr;
+ LocI:=0;
+ LocDoc:=0;
+ End;
+ If PrintDate Then Writeln(f,Space+'Дата: '+DateStr);
+  End;
+
+ End;
+ Writeln(f,Space+'-----------------------------------------------------------------------------');
+
+ Writeln(f,Space+'                                       Всего документов: ',StrToInt(AllDoc):CIZena);
+ Writeln(f,Space+'                                        приход на склад: '+RecognizReal(StrToReal(AllRashod),
+ CIZena,CMantissa),' руб');
+ Writeln(f,Space+'                                       расход со склада: '+RecognizReal(StrToReal(AllPrihod),
+ CIZena,CMantissa),' руб');
+ Writeln(f,Space+'                                          Всего ревизия: '+RecognizReal(StrToReal(AllSumma),
+ CIZena,CMantissa),' руб');
+ Writeln(f,Space,'"'+DayString[DayOfWeek(ToDay)]+'" '+TodayString(DateMask)+'('+Times+')');
+ Writeln(f,Space+'=============================================================================');
+ System.Close(f);
+
+ NoInfoMsg;
+
+ ViewAsText(Path.ToTemp+'listr.txt',True);
+ Report(Path.ToTemp+'listr.txt','',1,False,False,false);
+ End;
+
+End;
+
+
+
+Procedure TReestrRewWindow.SortString;
+Var i,j : Word;
+    ws,ws1 : String;
+    TestStr : AllStr;
+    TempBox : PBox;
+    R : TRect;
+    {mStatus:Maska2;}
+Begin
+
+AllDoc[0]:=#0;
+AllSumma[0]:=#0;
+AllPrihod[0]:=#0;
+AllRashod[0]:=#0;
+
+
+
+R.Assign(0,0,0,0);
+TempBox := New(PBox, Init(R, 1, Nil));
+TempBox^.NewList(New(PTextCollection, Init(0,1)));
+
+
+DocList^.NewList(Nil);
+DocList^.NewList(New(PMyCollection, Init(0,1)));
+
+DInfoMsg('Идет сортировка...');
+
+ControlSort^.GetData(Sorting);
+
+{ControlStatus^.GetData(Status);}
+{
+WordToBit2(STatus,mStatus);
+Convert2(mStatus);
+}
+ControlDirection^.GetData(Direction);
+
+If Direction=1 Then
+DistanationSorting:=False
+Else
+DistanationSorting:=True;
+
+If NoScreen^.List^.Count>0 Then
+Begin
+{формируем отсортированый список}
+For j:=0 to NoScreen^.List^.Count-1 Do
+Begin
+ ws:=NoScreen^.GEtText(j,NoScreen^.List^.Count);
+ TestStr:=Copy(wS,1+1+CDocNumer+1+CDate+1+CIZena+1+CIZena+1+CIZena+1+CKto+1,2);
+ If TestStr='Ok' Then TestStr:='0'
+ Else TestStr:='1';
+
+{If (mstatus[StrToInt(TestStr)+1]=1) Then}
+Begin
+
+Str(StrToInt(AllDoc)+1:CLitrMantissa+1,AllDoc);
+DelSpace(AllDoc);
+
+Str(StrToReal(AllSumma)+StrToReal(Copy(ws,1+1+CDocNumer+1+CDate+1,CIZena)):CIZena:CMantissa,AllSumma);
+DelSpace(AllSumma);
+Str(StrToReal(AllPrihod)+StrToReal(Copy(ws,1+1+CDocNumer+1+CDate+1+CIZena+1+CIZena+1,CIZena)):CIZena:CMantissa,AllPrihod);
+DelSpace(AllPrihod);
+Str(StrToReal(AllRashod)+StrToReal(Copy(ws,1+1+CDocNumer+1+CDate+1+CIZena+1,CIZena)):CIZena:CMantissa,AllRashod);
+DelSpace(AllRashod);
+
+
+
+Case Sorting Of
+{дата}
+0:Begin
+   ws1:=Copy(ws,1+1+CDocnumer+1,CDate);
+   Str(DateStringToDate(DateMask,ws1):CKol+1,ws1);
+   ws:=ws1+ws;
+  End;
+{всего}
+1:Begin
+   ws1:=Copy(ws,1+1+CDocNumer+1+CDate+1,CIZena);
+   RFormatZerro(ws1,CIZena);
+   ws:=ws1+ws;
+  End;
+{расход}
+2:Begin
+   ws1:=Copy(ws,1+1+CDocNumer+1+CDate+1+CIZena+1,CIZena);
+   RFormatZerro(ws1,CIZena);
+   ws:=ws1+ws;
+  End;
+{приход}
+3:Begin
+   ws1:=Copy(ws,1+1+CDocNumer+1+CDate+1+CIZena+1+CIZena+1,CIZena);
+   RFormatZerro(ws1,CIZena);
+   ws:=ws1+ws;
+  End;
+{оператор}
+4:Begin
+   ws1:=Copy(ws,1+1+CDocNumer+1+CDate+1+CIZena+1+CIZena+1+CIZena+1,CKto);
+   ws:=ws1+ws;
+  End;
+Else;
+End;{CAse}
+  TempBox^.List^.Insert(NewStr(ws));
+  TempBox^.SetRange(TempBox^.List^.Count);
+End;
+End;
+
+
+{форматируем сформированый список под экранную форму}
+If TempBox^.List^.Count>0 Then
+Begin
+For j:=0 to TempBox^.List^.Count-1 Do
+Begin
+  ws:=TempBox^.GEtText(j,TempBox^.List^.Count);
+
+Case Sorting Of
+{дата}
+0:Begin
+   System.Delete(ws,1,CKol+1);
+  End;
+{всего}
+1:Begin
+   System.Delete(ws,1,CIZena);
+  End;
+{расход}
+2:Begin
+   System.Delete(ws,1,CIZena);
+  End;
+{приход}
+3:Begin
+   System.Delete(ws,1,CIZena);
+  End;
+{оператор}
+4:Begin
+   System.Delete(ws,1,CKto);
+  End;
+Else;
+End;{CAse}
+  DocList^.List^.Insert(NewStr(ws));
+  DocList^.SetRange(DocList^.List^.Count);
+End;
+End;{If TempCalcList^.List^.Count>0 Then}
+End;
+
+Str(StrToReal(AllSumma):CIZena:CMantissa,AllSumma);
+DelSpace(AllSumma);
+
+Str(StrToReal(AllRashod):CIZena:CMantissa,AllRashod);
+DelSpace(AllRashod);
+
+Str(StrToReal(AllPrihod):CIZena:CMantissa,AllPrihod);
+DelSpace(AllPrihod);
+
+Str(StrToInt(AllDoc):CLitrMantissa+1,AllDoc);
+DelSpace(AllDoc);
+
+Dispose(ControlAllSumma,Done);
+R.Assign(64, 22, 79, 23);
+ControlAllSumma := New(PColoredText, Init(R, #3+AllSumma, $4E));
+Insert(ControlAllSumma);
+
+Dispose(ControlAllRashod,Done);
+R.Assign(11, 22, 26, 23);
+ControlAllRashod := New(PColoredText, Init(R, #3+AllRashod, $4E));
+Insert(ControlAllRashod);
+
+Dispose(ControlAllPrihod,Done);
+R.Assign(36, 22, 51, 23);
+ControlAllPrihod := New(PColoredText, Init(R, #3+AllPrihod, $4E));
+Insert(ControlAllPrihod);
+
+Dispose(ControlAllDoc,Done);
+R.Assign(53, 22, 57, 23);
+ControlAllDoc := New(PColoredText, Init(R, #3+AllDoc, $4E));
+Insert(ControlAllDoc);
+
+
+
+NoInfoMsg;
+
+
+Dispose(TempBox,Done);
+
+DocList^.FocusItem(0);
+
+FreshRewisiaHint;
+
+
+DistanationSorting:=True;
+End;
+
+
+Function TReestrRewWindow.LocateList(P:PBox;s:AllStr):LongInt;
+Var c: Word;
+    st : AllStr;
+Begin
+LocateList:=0;
+If p^.list^.Count>0 Then
+ Begin
+  For c:=0 To P^.List^.Count-1 Do
+   Begin
+    st:=Copy(P^.GetText(c,P^.List^.Count),1,1+CDocNumer+1+CDate);
+    if s=st Then
+     Begin
+      LocateList:=c;
+      Break;
+     End;
+   End;
+ End;
+End;
+
+
+Procedure TReestrRewWindow.Refresh;
+Var Fp : RewisiaFileType;
+    s  : String;
+    ws : String;
+    E  : PRewisiaType;
+    FPos:Byte;
+    FS : AllStr;
+    c  : Word;
+    R  : TRect;
+    Cur: LongInt;
+    TempS   : TDateString;
+    mSorting: Maska5;
+    {mStatus : Maska2;}
+Begin
+
+DInfo('Минуточку...');
+
+Dispose(NoScreen,Done);
+R.Assign(0, 0, 0, 0);
+NoScreen := New(PBox, Init(R, 1, Nil));
+NoScreen^.NewList(New(PTextCollection, Init(0,1)));
+{
+AllDoc[0]:=#0;
+AllSumma[0]:=#0;
+AllPrihod[0]:=#0;
+AllRashod[0]:=#0;
+}
+New(E,Init);
+{
+ControlStatus^.GetData(Status);
+WordToBit2(STatus,mStatus);
+Convert2(mStatus);
+}
+For Cur:=Start To Stop Do
+Begin
+c:=IOResult;
+TempS:=DAteToDateString(DAteMask,Cur);
+Assign(fp,Path.ToRewisia+TempS+'.rwz');
+c:=IOResult;
+Reset(fp);
+c:=IOResult;
+If c=0 Then
+ Begin
+While Not(Eof(Fp)) Do
+ Begin
+  ReadRewisia(Fp,E);
+
+ If (FiltrMas[E^.Dat.Class]=1) Then
+   Begin
+    {
+    Writeln(FiltrMas[E^.Dat.Class],' ',E^.Dat.Class);
+    Readln;
+    {
+    Str(StrToInt(AllDoc)+1:CLitrMantissa,AllDoc);
+    DelSpace(AllDoc);
+    }
+
+
+
+    RFormatZerro(E^.Dat.Document,CDocNumer);
+    Format(E^.Dat.Document,CDocNumer);
+    s:='│'+E^.Dat.Document+'│'+E^.Dat.DateC+'│';
+    DelSpace(E^.Dat.ItogoPlus);
+    RFormat(E^.Dat.ItogoPlus,CIZena);
+    DelSpace(E^.Dat.ItogoMinus);
+    RFormat(E^.Dat.ItogoMinus,CIZena);
+    DelSpace(E^.Dat.Itogo);
+    RFormat(E^.Dat.Itogo,CIZena);
+    {
+    Str(StrToReal(AllSumma)+StrToReal(E^.Dat.Itogo):CIZena:CMantissa,AllSumma);
+    DelSpace(AllSumma);
+    Str(StrToReal(AllPrihod)+StrToReal(E^.Dat.ItogoPlus):CIZena:CMantissa,AllPrihod);
+    DelSpace(AllPrihod);
+    Str(StrToReal(AllRashod)+StrToReal(E^.Dat.ItogoMinus):CIZena:CMantissa,AllRashod);
+    DelSpace(AllRashod);
+    }
+    s:=s+E^.Dat.Itogo+'│'+E^.Dat.ItogoPlus+'│'+E^.Dat.ItogoMinus+'│';
+    ws:=GetOperatorName(E^.Dat.Caption);
+    Format(Ws,CKto);
+    s:=s+ws;
+    ws:='  ';
+    s:=s+'│'+ws;
+    DelSpace(E^.Dat.ItogoPlus);
+    RFormatZerro(E^.Dat.ItogoPlus,CIZena);
+    DelSpace(E^.Dat.ItogoMinus);
+    RFormatZerro(E^.Dat.ItogoMinus,CIZena);
+    DelSpace(E^.Dat.Itogo);
+    RFormatZerro(E^.Dat.Itogo,CIZena);
+
+    ws:=E^.Dat.Comment;
+    Format(ws,CSertif);
+    s:=s+'│'+ws+'│';
+
+    ws:=IntToStr(E^.Dat.Class,CMantissa);
+    RFormatZerro(ws,CMantissa);
+    s:=s+ws;
+
+{
+    If E^.Dat.Tested=0 Then
+    Begin
+     ws:=GetOperatorName(E^.Dat.CaptionTested);
+     Format(ws,CKto);
+     Format(E^.Dat.DateT,CDate);
+     Format(E^.Dat.TimeT,CDate);
+     ws:=ws+' '+E^.Dat.DateT+' '+E^.Dat.TimeT;
+     s:=s+'│'+ws;
+    End;
+}
+
+    ws:=GetOperatorName(E^.Dat.Caption);
+    Format(Ws,CKto);
+
+    NoScreen^.List^.Insert(NewStr(s));
+    NoScreen^.SetRange(NoScreen^.List^.Count);
+   End;{If StatusDoc=0}
+
+ End;{While}
+System.Close(Fp);
+End;{If IOResult}
+End;{For}
+Dispose(E,Done);
+NoScreen^.FocusItem(0);
+NoInfo;
+End;
+
+
+
+procedure TReestrRewWindow.FullPreview;
+Var Ass : DocumentEdit;
+    E : PRewisiaType;
+    R : TRect;
+    f : RewisiaFileType;
+    c,i : Word;
+    P : PBox;
+    s,ws : TMyString;
+    Find : Boolean;
+    SDoc : ArtikulStr;
+    SDate,swspom : TDateString;
+    ws1,WspomSkidka:String[CIZena];
+Begin
+If (DocList^.List<>Nil)And(DocList^.List^.Count>=1) Then
+Begin
+  Ass.EditPosition:=Copy(DocList^.GetText(DocList^.Focused,DocList^.List^.Count),1+1,CDocNumer);
+  DelSpace(Ass.EditPosition);
+  DelZerro(Ass.EditPosition);
+  Ass.D:=Copy(DocList^.GetText(DocList^.Focused,DocList^.List^.Count),1+1+CDocNumer+1,CDate);
+  DelSpace(Ass.D);
+  SDate:=Ass.D;
+  SDoc:=Ass.EditPosition;
+
+  Assign(f,Path.ToRewisia+Ass.d+'.rwz');
+
+  c:=IOResult;
+  Reset(f);
+  c:=IOResult;
+
+  If c<>0 Then
+  Begin
+   MessageBox(#3^M+#3'Ошибка доступа к файлу '+Path.ToRewisia+Ass.d+'.rwz',Nil,mfError+mfCancelButton);
+   Exit;
+  End;
+
+  DInfo('Ищу документ...');
+  New(E,Init);
+  Find := False;
+  ClearChar(Ass.EditPosition);
+  While Not(Eof(f)) And Not(Find) Do
+   Begin
+   ReadRewisia(F,E);
+   ClearChar(E^.Dat.Document);
+    If (E^.Dat.DateC=Ass.D) and (E^.Dat.Document=Ass.EditPosition) Then
+          Begin
+           Find:=True;
+           Break;
+          End;
+   End;
+   System.Close(f);
+   If Find Then
+    Begin
+     R.Assign(0,0,0,0);
+P := New(PBox, Init(R, 1, Nil));
+P^.NewList(New(PTextCollection, Init(0,1)));
+For c:=1 To E^.Dat.Amount Do
+ Begin
+{If StrToInt(E^.Dat.Element[c].Input.Kol)<>0 Then}
+Begin
+  S:=E^.Dat.Element[c].BazKod;
+  ws:=GetIdField(FName,s);
+  Format(ws,CName-6);
+  s:=ws{+'│'+s};
+ {ws:=GetIdField(FInPack,E^.Dat.Element[c].BazKod);
+  RFormat(ws,CInPack);
+  s:=s+'│'+ws;
+  ws:=GetIdField(FLitr,E^.Dat.Element[c].BazKod);
+  RFormat(ws,CInPack);
+  s:=s+'│'+ws;}
+
+  For i:=1 To CDivision Do
+   Begin
+    Str(StrToInt(E^.Dat.Element[c].Input.DivisionS[i]):CKol+1,E^.Dat.Element[c].Input.DivisionS[i]);
+    DelSpace(E^.Dat.Element[c].Input.DivisionS[i]);
+    RFormat(E^.Dat.Element[c].Input.DivisionS[i],CKol+1);
+    s:=s+'│'+E^.Dat.Element[c].Input.DivisionS[i];
+   End;
+
+{ DelSpace(E^.Dat.Element[c].Input.Kol);
+  RFormat(E^.Dat.Element[c].Input.Kol,CKol+1);
+  s:=s+'│'+E^.Dat.Element[c].Input.Kol;}
+  DelSpace(E^.Dat.Element[c].Input.R_Zena);
+  RFormat(E^.Dat.Element[c].Input.R_Zena,CZena);
+  s:=s+'│'+E^.Dat.Element[c].BazKOd+'│'+E^.Dat.Element[c].Input.R_Zena+'│';
+
+{ swspom:=E^.Dat.Element[c].Input.Kol;
+  If Pos('-',swspom)>0 Then System.Delete(swspom,Pos('-',swspom),1);
+  ws:=CalcPack(E^.Dat.Element[c].BazKod,swspom);
+  DelSpace(ws);
+  If StrToInt(E^.Dat.Element[c].Input.Kol)<0 Then
+   Begin
+    ws:='-('+ws+')';
+   End;
+  Format(ws,CPAck);
+
+  s:=s+'│'+ws;}
+
+  P^.List^.Insert(NewStr(s));
+  P^.SetRange(P^.List^.Count);
+ End;
+ End;
+P^.FocusItem(0);
+NoInfo;
+s:=E^.Dat.Itogo;
+DelSpace(s);
+s:=' Всего: '+s+' в том числе ';
+DelSpace(E^.Dat.ItogoPlus);
+s:=s+' Приход'+': '+E^.Dat.ItogoPlus;
+DelSpace(E^.Dat.ItogoMinus);
+s:=s+' Расход: '+E^.Dat.ItogoMinus;
+                   {Вставить номер и дату документа в просмотре}
+FullScreen(P,'Наименование товара  Колич1 Колич2 Колич3 Колич4 Колич5 Колич6 Колич7 Колич8',s,
+             {12345678901234567890│123456│123456│123456│123456│123456│123456│123456│123456}
+SDoc,SDAte,0);
+Dispose(E,Done);
+Dispose(P,Done);
+    End{Find}
+Else
+  Begin
+  NoInfo;
+  MessageBox(#3^M+#3'Документ не найден!',Nil,mfError+mfCancelButton);
+  Dispose(E,Done);
+  End;
+End;{P^.List}
+End;{Procedure}
+
+Begin
+Sorting:=1;
+Direction:=0;
+End.

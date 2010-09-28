@@ -1,0 +1,30 @@
+var
+  DataRec : record
+    Field1 : Word;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(27, 7, 53, 16);
+New(Dlg, Init(R, 'Уточните'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(1, 1, 25, 8);
+Control := New(PRadioButtons, Init(R, 
+  NewSItem('Списания',
+  NewSItem('Брак',
+  NewSItem('Недовозы',
+  NewSItem('Ревизия на складе',
+  NewSItem('Перенос позиций',
+  NewSItem('Ошибки',
+  NewSItem('Все', Nil)))))))));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

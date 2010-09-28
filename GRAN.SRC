@@ -1,0 +1,73 @@
+var
+  DataRec : record
+    Field1 : String[5];
+    Field3 : String[5];
+    Field4 : String[5];
+    Field5 : String[5];
+    Field6 : String[5];
+    Field7 : String[5];
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(31, 7, 48, 15);
+New(Dlg, Init(R, 'Наценка на З/Ц'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(9, 1, 16, 2);
+Control := New(PInputLine, Init(R, 5));
+Control^.Options := Control^.Options and not ofSelectable;
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['0','1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 1, 9, 2);
+  Dlg^.Insert(New(PLabel, Init(R, 'Цена ~1~:', Control)));
+
+R.Assign(9, 2, 16, 3);
+Control := New(PInputLine, Init(R, 5));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['0','1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 2, 9, 3);
+  Dlg^.Insert(New(PLabel, Init(R, 'Цена ~2~:', Control)));
+
+R.Assign(9, 3, 16, 4);
+Control := New(PInputLine, Init(R, 5));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['0','1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 3, 9, 4);
+  Dlg^.Insert(New(PLabel, Init(R, 'Цена ~3~:', Control)));
+
+R.Assign(9, 4, 16, 5);
+Control := New(PInputLine, Init(R, 5));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['0','1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 4, 9, 5);
+  Dlg^.Insert(New(PLabel, Init(R, 'Цена ~4~:', Control)));
+
+R.Assign(9, 5, 16, 6);
+Control := New(PInputLine, Init(R, 5));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['0','1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 5, 9, 6);
+  Dlg^.Insert(New(PLabel, Init(R, 'Цена ~5~:', Control)));
+
+R.Assign(9, 6, 16, 7);
+Control := New(PInputLine, Init(R, 5));
+Dlg^.Insert(Control);
+  PInputLine(Control)^.Validator := New(PFilterValidator, Init(['0','1','2','3','4','5','6','7','8','9','0','.']));
+
+  R.Assign(1, 6, 9, 7);
+  Dlg^.Insert(New(PLabel, Init(R, 'Цена ~6~:', Control)));
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

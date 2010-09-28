@@ -1,0 +1,30 @@
+var
+  DataRec : record
+    Field1 : Word;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(0, 0, 80, 23);
+New(Dlg, Init(R, 'Dialog Design'));
+
+R.Assign(22, 5, 57, 6);
+Control := New(PCheckboxes, Init(R, 
+  NewSItem('1',
+  NewSItem('2',
+  NewSItem('3',
+  NewSItem('4',
+  NewSItem('5', Nil)))))));
+Dlg^.Insert(Control);
+
+  R.Assign(1, 5, 22, 6);
+  Dlg^.Insert(New(PLabel, Init(R, 'Выбранные отделения:', Control)));
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

@@ -1,0 +1,33 @@
+type
+  TListBoxRec = record    {<-- omit if TListBoxRec is defined elsewhere}
+    PS : PStringCollection;
+    Selection : Integer;
+    end;
+
+var
+  DataRec : record
+    Field3 : TListBoxRec;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(29, 4, 50, 18);
+New(Dlg, Init(R, 'Укажите шкалу'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(20, 1, 21, 13);
+Control := New(PScrollBar, Init(R));
+Dlg^.Insert(Control);
+
+R.Assign(1, 1, 20, 13);
+Control := New(PListBox, Init(R, 2, PScrollbar(Control)));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

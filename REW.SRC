@@ -1,0 +1,45 @@
+var
+  DataRec : record
+    Field1 : String[10];
+    Field2 : Word;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(10, 4, 70, 18);
+New(Dlg, Init(R, 'Комментарий'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(1, 2, 59, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+R.Assign(2, 4, 58, 12);
+Control := New(PRadioButtons, Init(R, 
+  NewSItem('1234567890123456789012',
+  NewSItem('12345678901234567890',
+  NewSItem('12345678901324567890',
+  NewSItem('13246789001234567890',
+  NewSItem('12345678901234567890',
+  NewSItem('11234567890132456789',
+  NewSItem('12345678901234567890',
+  NewSItem('12345678901234567890',
+  NewSItem('12345678901234567890',
+  NewSItem('13245678901234567890',
+  NewSItem('1234567890123456789012',
+  NewSItem('12345678901234567890',
+  NewSItem('12345678901345678900',
+  NewSItem('13245678901324567890',
+  NewSItem('13245678901324567890',
+  NewSItem('13245678901324868977', Nil))))))))))))))))));
+Control^.Options := Control^.Options or ofFramed;
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

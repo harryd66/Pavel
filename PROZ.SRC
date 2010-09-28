@@ -1,0 +1,23 @@
+var
+  DataRec : record
+    Field1 : String[10];
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(32, 8, 48, 13);
+New(Dlg, Init(R, ''));
+Dlg^.Options := Dlg^.Options or ofCenterX;
+
+R.Assign(2, 2, 14, 3);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

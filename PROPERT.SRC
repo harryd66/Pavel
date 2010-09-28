@@ -1,0 +1,77 @@
+var
+  DataRec : record
+    Field1 : Word;
+    Field2 : String[8];
+    Field3 : String[15];
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+  ControlVidPrihod : PCheckboxes;
+  ControlSrokDo : PInputLine;
+  ControlStartSumma : PColoredText;
+  ControlOstatok : PInputLine;
+
+begin
+R.Assign(13, 8, 67, 14);
+New(Dlg, Init(R, 'Свойства накладной прихода'));
+Dlg^.Options := Dlg^.Options or ofCenterX or ofCenterY;
+
+R.Assign(2, 4, 27, 5);
+ControlVidPrihod := New(PCheckboxes, Init(R, 
+  NewSItem('Отсрочка платежа...', Nil)));
+Dlg^.Insert(ControlVidPrihod);
+
+R.Assign(27, 4, 37, 5);
+ControlSrokDo := New(PInputLine, Init(R, 8));
+Dlg^.Insert(ControlSrokDo);
+  PInputLine(ControlSrokDo)^.Validator := New(PPXPictureValidator, Init('[##-##-##]', True));
+
+  R.Assign(26, 3, 35, 4);
+  Dlg^.Insert(New(PLabel, Init(R, 'Срок до:', ControlSrokDo)));
+
+R.Assign(2, 1, 11, 2);
+Control := New(PColoredText, Init(R, 'Документ:', $74));
+Dlg^.Insert(Control);
+
+R.Assign(11, 1, 15, 2);
+Control := New(PColoredText, Init(R, '1234', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(16, 1, 19, 2);
+Control := New(PColoredText, Init(R, 'от', $74));
+Dlg^.Insert(Control);
+
+R.Assign(19, 1, 27, 2);
+Control := New(PColoredText, Init(R, '12-34-89', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(2, 2, 16, 3);
+Control := New(PColoredText, Init(R, 'Сумма прихода:', $74));
+Dlg^.Insert(Control);
+
+R.Assign(16, 2, 31, 3);
+ControlStartSumma := New(PColoredText, Init(R, '123456789012345', $7E));
+Dlg^.Insert(ControlStartSumma);
+
+R.Assign(16, 6, 33, 7);
+ControlOstatok := New(PInputLine, Init(R, 15));
+Dlg^.Insert(ControlOstatok);
+
+  R.Assign(1, 6, 16, 7);
+  Dlg^.Insert(New(PLabel, Init(R, 'Остаток долга:', ControlOstatok)));
+
+R.Assign(38, 2, 53, 3);
+Control := New(PColoredText, Init(R, '123456789012345', $7E));
+Dlg^.Insert(Control);
+
+R.Assign(33, 2, 38, 3);
+Control := New(PColoredText, Init(R, 'Долг:', $74));
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

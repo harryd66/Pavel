@@ -1,0 +1,57 @@
+var
+  DataRec : record
+    Field1 : String[10];
+    Field2 : String[10];
+    Field3 : String[10];
+    Field5 : String[10];
+    Field6 : String[10];
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(0, 0, 80, 23);
+New(Dlg, Init(R, 'Dialog Design'));
+
+R.Assign(6, 13, 18, 14);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+  R.Assign(3, 13, 6, 14);
+  Dlg^.Insert(New(PLabel, Init(R, '1:', Control)));
+
+R.Assign(21, 13, 33, 14);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+  R.Assign(18, 13, 21, 14);
+  Dlg^.Insert(New(PLabel, Init(R, '2:', Control)));
+
+R.Assign(36, 13, 48, 14);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+  R.Assign(33, 13, 36, 14);
+  Dlg^.Insert(New(PLabel, Init(R, '3:', Control)));
+
+R.Assign(51, 13, 63, 14);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+  R.Assign(48, 13, 51, 14);
+  Dlg^.Insert(New(PLabel, Init(R, '4:', Control)));
+
+R.Assign(66, 13, 78, 14);
+Control := New(PInputLine, Init(R, 10));
+Dlg^.Insert(Control);
+
+  R.Assign(63, 13, 66, 14);
+  Dlg^.Insert(New(PLabel, Init(R, '5:', Control)));
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;

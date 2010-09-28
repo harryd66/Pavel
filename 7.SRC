@@ -1,0 +1,40 @@
+var
+  DataRec : record
+    Field1 : String[20];
+    Field2 : String[8];
+    Field3 : Word;
+  end;
+
+function MakeDialog : PDialog;
+var
+  Dlg : PDialog;
+  R : TRect;
+  Control : PView;
+
+begin
+R.Assign(0, 4, 80, 18);
+New(Dlg, Init(R, 'Dialog Design'));
+
+R.Assign(4, 6, 16, 7);
+Control := New(PInputLine, Init(R, 20));
+Dlg^.Insert(Control);
+
+  R.Assign(1, 6, 4, 7);
+  Dlg^.Insert(New(PLabel, Init(R, 'N:', Control)));
+
+R.Assign(20, 6, 30, 7);
+Control := New(PInputLine, Init(R, 8));
+Dlg^.Insert(Control);
+
+  R.Assign(16, 6, 20, 7);
+  Dlg^.Insert(New(PLabel, Init(R, 'от:', Control)));
+
+R.Assign(26, 9, 38, 10);
+Control := New(PCheckboxes, Init(R, 
+  NewSItem('Label1', Nil)));
+PCluster(Control)^.SetButtonState($00000001, False);
+Dlg^.Insert(Control);
+
+Dlg^.SelectNext(False);
+MakeDialog := Dlg;
+end;
